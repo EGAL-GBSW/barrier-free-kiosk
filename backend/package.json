@@ -1,0 +1,21 @@
+{
+  "name": "barrier-free-kiosk-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "STT 기반 배리어프리 키오스크 주문 API",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4"
+  }
+}
