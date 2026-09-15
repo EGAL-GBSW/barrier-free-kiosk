@@ -38,6 +38,15 @@ app.get("/menus/:id", (req, res) => {
   res.status(200).json(menu);
 });
 
+app.post("/orders", (req, res) => {
+  console.log("받은 주문:", req.body);
+
+  res.status(200).json({
+    message: "주문 데이터를 받았습니다.",
+    received: req.body
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
