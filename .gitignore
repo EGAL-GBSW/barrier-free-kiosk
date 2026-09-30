@@ -20,5 +20,7 @@ ai/audio/*.webm
 ai/benchmark_manifest.csv
 ai/dataset_references.csv
 ai/benchmark_results/
+ai/data/*
+!ai/data/.gitkeep
 ai/.cache/
 ai/models/

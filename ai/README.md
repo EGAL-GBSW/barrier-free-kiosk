@@ -71,6 +71,47 @@ python validate_dataset.py --audio-dir audio --reference-csv dataset_references.
 
 정답 CSV가 있으면 공백·문장부호를 제외한 전체 글자 오류율(CER)과 정확히 일치한 파일 비율을 요약합니다. 정답 없는 파일도 추출하지만 점수에는 포함하지 않습니다. 개별 파일 추출 실패는 CSV에 기록하고, 실패가 하나라도 있으면 종료 코드가 1이 됩니다. 정답 없이 실행한 경우 인식 정확도는 자동 판정할 수 없으므로 CSV의 문장을 직접 확인해야 합니다. 실제 데이터셋 라벨 CSV(`dataset_references.csv`)와 결과 폴더는 Git에서 제외합니다.
 
+### EGAL 41개 파일 평가표와 음성 ZIP
+
+`evaluate_pilot_xlsx.py`는 `EGAL_STT_pilot_test_41.xlsx`의 `Pilot_Test` 시트에서 `원본 파일명`과 `정답 문장`을 읽고, 음성 ZIP 안의 파일을 직접 찾아 STT 결과를 추출합니다. ZIP은 풀지 않으며 원본 평가표를 수정하지 않습니다.
+
+A4000 서버에서 저장소를 클론하고 평가 도구를 설치합니다.
+
+```bash
+git clone --branch feature/ai-stt --single-branch https://github.com/EGAL-GBSW/barrier-free-kiosk.git
+cd barrier-free-kiosk/ai
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+python check_environment.py
+```
+
+평가표 XLSX와 음성 ZIP은 Git에 포함되지 않습니다. 두 파일을 서버의 `ai/data/` 폴더에 별도로 전송한 뒤 실행합니다. ZIP을 미리 풀 필요는 없습니다. 한 모델만 확인하려면:
+
+```bash
+python evaluate_pilot_xlsx.py \
+  --evaluation-xlsx data/EGAL_STT_pilot_test_41.xlsx \
+  --audio-zip data/스피키음성데이터-20260930T081748Z-1-001.zip \
+  --model medium --device cuda --compute-type float16
+```
+
+처음 3개만 확인하려면 `--limit 3`을 추가합니다. 기본 출력은 `benchmark_results/pilot_stt_results.csv`와 같은 위치의 요약 JSON입니다. CSV에서 정답과 추출 결과를 나란히 볼 수 있으며 터미널에도 파일별 문장이 표시됩니다. 이미 결과 파일이 있으면 실수로 덮어쓰지 않도록 중단합니다. 다시 실행할 때는 새 `--output-csv` 경로를 주거나 `--overwrite`를 명시하세요.
+
+`정확히 일치`는 공백을 정리한 문장 전체가 같은 경우의 O/X이고, `정규화 CER`는 공백·문장부호를 제외한 글자 오류율입니다. 원본 평가표의 `Whisper base/small 결과` 열은 채우지 않습니다. 현재 선택한 모델이 `medium`이기 때문이며, 모델을 바꾸면 `--model large-v3`와 다른 결과 경로를 사용해 비교할 수 있습니다. 평가표·음성 ZIP·결과 CSV에는 음성과 발화 내용이 포함되므로 Git에 추가하지 마세요.
+
+`medium`과 한 단계 큰 `large-v3`를 한 번에 비교하려면 아래 명령을 사용합니다. 두 모델을 별도 프로세스에서 순서대로 실행하므로 동시에 GPU에 올리지 않습니다. 결과 CSV는 각 모델의 추출 문장·일치 여부·CER·처리 시간을 같은 행에 나란히 보여줍니다.
+
+```bash
+python compare_pilot_models.py \
+  --evaluation-xlsx data/EGAL_STT_pilot_test_41.xlsx \
+  --audio-zip data/스피키음성데이터-20260930T081748Z-1-001.zip \
+  --device cuda --compute-type float16
+```
+
+처음에는 `--limit 3`으로 확인하세요. 기본 비교 결과는 `benchmark_results/pilot_medium_vs_large-v3.csv`, 모델별 상세 CSV 및 요약 JSON입니다. `large-v3`는 처음 실행 시 모델을 다운로드하므로 서버의 인터넷 연결과 충분한 저장 공간이 필요합니다.
+일부 파일을 시험한 뒤 전체 41개를 다시 실행할 때는 다른 `--output-dir`을 지정하거나 `--overwrite`를 추가하세요.
+두 모델은 A4000 서버에서 실행합니다. 서버의 CUDA/cuDNN 버전이 현재 `faster-whisper`/`ctranslate2`와 호환되어야 합니다.
+
 코드 테스트는 모델 다운로드나 실제 음성 없이 가짜 모델로 실행합니다.
 
 ```bash
