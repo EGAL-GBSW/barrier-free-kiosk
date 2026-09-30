@@ -17,3 +17,8 @@ ai/audio/*.mp3
 ai/audio/*.m4a
 ai/audio/*.webm
 !ai/audio/.gitkeep
+ai/benchmark_manifest.csv
+ai/dataset_references.csv
+ai/benchmark_results/
+ai/.cache/
+ai/models/
