@@ -1,0 +1,96 @@
+/* ─── StepBar (order-stepbar) ────────────────────────────────────
+ * desktop/frontend 기준:
+ *   height: 74px
+ *   display: grid; grid-template-columns: repeat(5, minmax(0, 1fr))
+ *   padding: 0 34px
+ *   background: #fff; border-bottom: 2px solid #e2e2e2
+ * ──────────────────────────────────────────────────────────────── */
+
+.step-bar {
+  height: var(--stepbar);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  gap: 12px;
+  padding: 0 34px;
+  background: var(--surface);
+  border-bottom: 2px solid #e2e2e2;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* 개별 단계 */
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: #868686;
+  font-size: 1.06rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* 단계 사이 점선 구분 */
+.step:not(:last-child)::after {
+  content: "·····";
+  margin-left: auto;
+  color: #b5b5b5;
+  font-size: 1.15rem;
+  letter-spacing: 2px;
+}
+
+/* 원형 번호/체크 */
+.step__circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 2px solid #a7a7a7;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #666;
+}
+
+/* 완료 단계 */
+.step--done { color: var(--accent); }
+.step--done .step__circle {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* 현재 단계 */
+.step--active { color: var(--accent); font-weight: 700; }
+.step--active .step__circle {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ─── 반응형 ─── */
+@media (max-width: 1100px) {
+  .step-bar  { gap: 5px; padding: 0 16px; }
+  .step      { font-size: 0.82rem; gap: 5px; }
+  .step:not(:last-child)::after { content: "···"; letter-spacing: 0; }
+  .step__circle { width: 32px; height: 32px; }
+}
+
+@media (max-width: 760px) {
+  .step-bar { gap: 2px; padding: 0 7px; }
+
+  .step {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    font-size: 0.52rem;
+    text-align: center;
+    line-height: 1.1;
+    white-space: normal;
+  }
+  .step:not(:last-child)::after { display: none; }
+  .step__circle { width: 27px; height: 27px; font-size: 0.75rem; }
+}

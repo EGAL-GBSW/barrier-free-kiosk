@@ -1,0 +1,47 @@
+/* ─── AppLayout ──────────────────────────────────────────────────────
+ * start 화면:   KioskHeader + StartPage (100dvh) — stepbar·workspace 없음
+ * 나머지 화면:  KioskHeader + StepBar + workspace (3-row grid)
+ *   row 1: CategoryTabs  (auto)
+ *   row 2: main-panel    (1fr)
+ *   row 3: OrderDock     (--dock: 132px)
+ * ──────────────────────────────────────────────────────────────────── */
+
+.app-layout {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+/* ── workspace 그리드 ── */
+.app-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) var(--dock);
+  height: calc(100dvh - var(--header) - var(--stepbar));
+  min-height: 530px;
+  background: var(--surface);
+}
+
+/* complete 화면: 스크롤 허용, 고정 높이 해제 */
+.app-layout[data-page="complete"] .app-workspace {
+  display: block;
+  height: auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ── main 콘텐츠 영역 ── */
+.app-main {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* ─── 반응형 ─── */
+@media (max-width: 760px) {
+  .app-workspace { min-height: 640px; }
+}

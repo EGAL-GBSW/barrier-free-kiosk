@@ -1,0 +1,7 @@
+/* App 최상위 래퍼 */
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}

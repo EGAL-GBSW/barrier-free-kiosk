@@ -1,0 +1,95 @@
+/* ─── 전역 CSS 변수 ─────────────────────────────────── */
+:root {
+  font-family: 'DM Sans', 'Noto Sans KR', sans-serif;
+  font-synthesis: none;
+
+  /* 색상 */
+  --bg:          #f2f2f2;
+  --surface:     #ffffff;
+  --line:        #dadada;
+  --muted:       #888888;
+  --ink:         #282828;
+  --accent:      #23764b;     /* 선택 강조 (active 탭, 스텝 등) */
+  --accent-soft: #e7f3eb;
+  --danger:      #ae5440;
+
+  /* 레이아웃 */
+  --header:  88px;   /* kiosk-header 높이 */
+  --stepbar: 74px;   /* order-stepbar 높이 */
+  --dock:    132px;  /* compact-order-dock 높이 */
+
+  /* 타이포 */
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--bg);
+  color-scheme: light;
+}
+
+/* 글자 크기 단계 */
+:root[data-font="large"] { font-size: 19px; }
+:root[data-font="max"]   { font-size: 22px; --dock: 155px; }
+
+/* ─── 리셋 ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { min-height: 100%; overscroll-behavior: none; }
+body   { margin: 0; }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { word-break: keep-all; }
+p { line-height: 1.7; }
+strong { font-weight: 700; }
+
+button, input { font: inherit; color: inherit; }
+button {
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+button:disabled              { cursor: not-allowed; opacity: 0.35; }
+button:active:not(:disabled) { transform: translateY(1px); }
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* ─── 접근성 유틸 ────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: fixed;
+  left: 15px; top: -100px;
+  background: var(--accent);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  z-index: 200;
+  text-decoration: none;
+}
+.skip-link:focus { top: 12px; }
+
+/* ─── 앱 루트 ────────────────────────────────────────── */
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+/* ─── 반응형 변수 보정 ───────────────────────────────── */
+@media (max-width: 1100px) {
+  :root { --stepbar: 64px; }
+}
+@media (max-width: 760px) {
+  :root { --header: 62px; --stepbar: 66px; --dock: 126px; }
+  :root[data-font="max"] { --dock: 145px; }
+}

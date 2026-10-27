@@ -1,7 +1,8 @@
 import "./App.css"
+import AppLayout from "./components/layout/AppLayout"
 
 function App() {
-    return <></>
+  return <AppLayout />
 }
 
 export default App

@@ -1,0 +1,27 @@
+/* ─── FontControl ────────────────────────────────────── */
+.font-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.font-btn {
+  min-height: 40px;
+  min-width: 52px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.font-btn:hover { background: #ebebeb; }
+.font-btn--active {
+  background: #d4d4d4;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .font-btn { min-width: 40px; padding: 8px; font-size: 0.75rem; }
+}
