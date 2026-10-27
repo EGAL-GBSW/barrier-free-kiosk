@@ -1,71 +1,79 @@
 import "./KioskHeader.css"
-import FontControl from "../common/FontControl"
 
 /**
  * KioskHeader
- * desktop/frontend의 header.kiosk-header 구조를 재현합니다.
+ * 레퍼런스 ./frontend/app.js 및 ./frontend/kiosk.css 기준
  *
- * grid 3열:
- *  [좌] 홈 버튼                → justify-self: start
- *  [중] 경과 시간 (order-elapsed)
- *  [우] FontControl + 언어 선택 버튼
+ * 구조 (grid 3열):
+ *  1. [좌] 처음으로 (홈) 버튼 (showHome=false 시 mog. 워드마크)
+ *  2. [중] 경과 시간 (order-elapsed)
+ *  3. [우] 언어 선택 (language-options > language-option)
  *
  * Props:
- *   onHome   {Function} 홈 버튼 클릭 핸들러
- *   elapsed  {string}   "MM:SS" 형식 — 빈 문자열이면 숨김
- *   showHome {boolean}  홈 버튼 표시 여부 (start 화면에서는 false)
- *   font     {number}   현재 글자 크기 단계 (0·1·2)
- *   onFont   {Function} 글자 크기 변경 콜백
+ *   onHome      {Function}  홈 버튼 클릭 핸들러
+ *   elapsed     {string}    경과 시간 ("MM:SS")
+ *   showHome    {boolean}   홈 버튼 표시 여부 (기본값 true)
+ *   language    {string}    현재 언어 텍스트 (기본값 "한국어")
+ *   onLanguage  {Function}  언어 변경 핸들러
  */
 function KioskHeader({
   onHome,
-  elapsed = "",
+  elapsed = "00:00",
   showHome = true,
-  font = 0,
-  onFont,
+  language = "한국어",
+  onLanguage,
 }) {
   return (
-    <header className="kiosk-header">
-
-      {/* ── 좌: 홈 버튼 ── */}
-      <div className="kiosk-header__left">
-        {showHome && (
-          <button
-            className="header-home"
-            onClick={onHome}
-            aria-label="처음으로 돌아가기"
-          >
-            {/* TODO: 홈 아이콘 추가 */}
-            <span>처음으로</span>
-          </button>
-        )}
-      </div>
-
-      {/* ── 중: 경과 시간 ── */}
-      {elapsed ? (
-        <time
-          className="order-elapsed"
-          aria-label={`주문 경과 시간 ${elapsed}`}
-        >
-          {elapsed}
-        </time>
-      ) : (
-        <div aria-hidden="true" />
-      )}
-
-      {/* ── 우: FontControl + 언어 버튼 ── */}
-      <div className="kiosk-header__right">
-        <FontControl font={font} onFont={onFont} />
+    <header className="header kiosk-header">
+      {/* ── 좌: 홈 버튼 or 워드마크 ── */}
+      {showHome ? (
         <button
           type="button"
-          className="language-btn"
-          aria-pressed={true}
-          lang="ko"
+          className="header-home"
+          onClick={onHome}
+          data-action="home"
+          aria-label="처음으로 돌아가기"
         >
-          한국어
+          <svg
+            className="icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m3 10 9-7 9 7v11h-7v-7h-4v7H3V10Z" />
+          </svg>
+          <span>처음으로</span>
+        </button>
+      ) : (
+        <span className="wordmark" aria-label="모그커피">
+          mog<span className="brand-dot">.</span>
+        </span>
+      )}
+
+      {/* ── 중: 경과 시간 ── */}
+      <time
+        className="order-elapsed"
+        aria-label={`주문 경과 시간 ${elapsed || "00:00"}`}
+      >
+        {elapsed || "00:00"}
+      </time>
+
+      {/* ── 우: 언어 선택 ── */}
+      <div className="language-options" role="group" aria-label="언어 선택">
+        <button
+          type="button"
+          className="language-option"
+          aria-pressed="true"
+          lang="ko"
+          onClick={onLanguage}
+        >
+          {language}
         </button>
       </div>
-
     </header>
   )
 }

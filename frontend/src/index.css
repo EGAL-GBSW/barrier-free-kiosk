@@ -3,29 +3,40 @@
   font-family: 'DM Sans', 'Noto Sans KR', sans-serif;
   font-synthesis: none;
 
-  /* 색상 */
-  --bg:          #f2f2f2;
-  --surface:     #ffffff;
-  --line:        #dadada;
-  --muted:       #888888;
-  --ink:         #282828;
-  --accent:      #23764b;     /* 선택 강조 (active 탭, 스텝 등) */
-  --accent-soft: #e7f3eb;
-  --danger:      #ae5440;
+  /* 브랜드 색상 (파란색 계열) */
+  --brand:        #184bc1;   /* 파란색 — 선택·강조 포인트 */
+  --brand-mid:    #1d56d8;   /* 중간 파란 */
+  --brand-light:  #e7f4ff;   /* 연한 파란 — 배경 틴트 */
+  --brand-dark:   #123b9b;   /* 어두운 파란 — hover */
 
-  /* 레이아웃 */
-  --header:  88px;   /* kiosk-header 높이 */
-  --stepbar: 74px;   /* order-stepbar 높이 */
-  --dock:    132px;  /* compact-order-dock 높이 */
+  /* 중립 색상 */
+  --bg:           #f7fafc;   /* 전체 배경 */
+  --surface:      #ffffff;   /* 카드·패널 배경 */
+  --surface-alt:  #f1f7fc;   /* 보조 배경 */
+  --line:         #dce7ef;   /* 구분선 */
+  --muted:        #8995a1;   /* 보조 텍스트 */
+  --ink:          #263a4c;   /* 기본 텍스트 */
+
+  /* 시멘틱 */
+  --accent:       var(--brand);
+  --accent-soft:  var(--brand-light);
+  --danger:       #c0392b;
+
+  /* 레이아웃
+   * 헤더 영역 = kiosk-header(66px) + stepbar(66px) = 132px
+   */
+  --header:       132px;
+  --header-bar:   66px;    /* kiosk-header 자체 높이 */
+  --stepbar:      66px;
+  --dock:         132px;
 
   /* 타이포 */
   font-size: 16px;
   color: var(--ink);
-  background: var(--bg);
+  background: #f2f2f2;
   color-scheme: light;
 }
 
-/* 글자 크기 단계 */
 :root[data-font="large"] { font-size: 19px; }
 :root[data-font="max"]   { font-size: 22px; --dock: 155px; }
 
@@ -51,7 +62,7 @@ button:active:not(:disabled) { transform: translateY(1px); }
 button:focus-visible,
 input:focus-visible,
 a:focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--brand);
   outline-offset: 4px;
 }
 
@@ -63,11 +74,10 @@ a:focus-visible {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
 }
-
 .skip-link {
   position: fixed;
   left: 15px; top: -100px;
-  background: var(--accent);
+  background: var(--brand);
   color: #fff;
   padding: 14px 20px;
   border-radius: 8px;
@@ -82,14 +92,14 @@ a:focus-visible {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background: #f2f2f2;
 }
 
 /* ─── 반응형 변수 보정 ───────────────────────────────── */
 @media (max-width: 1100px) {
-  :root { --stepbar: 64px; }
+  :root { --stepbar: 64px; --header: 130px; }
 }
 @media (max-width: 760px) {
-  :root { --header: 62px; --stepbar: 66px; --dock: 126px; }
+  :root { --header: 124px; --header-bar: 60px; --stepbar: 64px; --dock: 126px; }
   :root[data-font="max"] { --dock: 145px; }
 }

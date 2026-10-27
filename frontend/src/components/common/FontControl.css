@@ -1,27 +1,35 @@
-/* ─── FontControl ────────────────────────────────────── */
+/* ─── FontControl ────────────────────────────────────────────────
+ *  헤더(진한 초록) 위에 올라가므로 흰색 반투명 스타일
+ * ──────────────────────────────────────────────────────────────── */
+
 .font-control {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .font-btn {
-  min-height: 40px;
+  min-height: 38px;
   min-width: 52px;
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-radius: 8px;
-  background: transparent;
-  color: var(--muted);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.75);
   font-size: 0.85rem;
   font-weight: 500;
 }
-.font-btn:hover { background: #ebebeb; }
+.font-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
 .font-btn--active {
-  background: #d4d4d4;
-  color: var(--ink);
+  background: #fff;
+  color: var(--brand);
+  border-color: #fff;
   font-weight: 700;
 }
 
 @media (max-width: 760px) {
-  .font-btn { min-width: 40px; padding: 8px; font-size: 0.75rem; }
+  .font-btn { min-width: 38px; padding: 6px 7px; font-size: 0.75rem; min-height: 34px; }
 }

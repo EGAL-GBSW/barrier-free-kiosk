@@ -1,47 +1,668 @@
-/* ─── AppLayout ──────────────────────────────────────────────────────
- * start 화면:   KioskHeader + StartPage (100dvh) — stepbar·workspace 없음
- * 나머지 화면:  KioskHeader + StepBar + workspace (3-row grid)
- *   row 1: CategoryTabs  (auto)
- *   row 2: main-panel    (1fr)
- *   row 3: OrderDock     (--dock: 132px)
- * ──────────────────────────────────────────────────────────────────── */
+/* ─── AppLayout ──────────────────────────────────────────────────
+ *  레퍼런스 ./frontend/kiosk.css 기준
+ *
+ *  start    화면: .kiosk-start (100dvh, header/stepbar/workspace 없음)
+ *  complete 화면: kiosk-header (66px) + order-stepbar (66px) + .complete-page
+ *  일반     화면: kiosk-header (66px) + order-stepbar (66px) + .workspace
+ * ──────────────────────────────────────────────────────────────── */
 
 .app-layout {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background: #f2f2f2;
 }
 
 /* ── workspace 그리드 ── */
-.app-workspace {
+.workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) var(--dock);
-  height: calc(100dvh - var(--header) - var(--stepbar));
+  grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) var(--dock, 132px);
+  height: calc(100dvh - var(--header, 132px));
   min-height: 530px;
-  background: var(--surface);
+  background: #f7fafc;
 }
 
-/* complete 화면: 스크롤 허용, 고정 높이 해제 */
-.app-layout[data-page="complete"] .app-workspace {
-  display: block;
-  height: auto;
-  min-height: 0;
-  overflow: auto;
+:root[data-font="max"] .workspace {
+  grid-template-rows: minmax(0, 1fr) 155px;
 }
 
-/* ── main 콘텐츠 영역 ── */
-.app-main {
+/* ── 카테고리 탭 열 (col 1, row 1) ── */
+.workspace > .category-tabs,
+.workspace > .app-category,
+.category-tabs {
   grid-column: 1;
-  grid-row: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 14px 16px 18px;
+  background: #f1f7fc;
+  border-right: 1px solid #dce7ef;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.category-tab-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 0 1 auto;
+}
+
+.category-tab {
+  width: 100%;
+  min-height: 60px;
+  padding: 12px 17px;
+  border: 1px solid #c6d7e6;
+  border-radius: 8px;
+  background: #fff;
+  color: #344c64;
+  font-size: 1.08rem;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.category-tab:hover:not(.active) {
+  background: #e7f4ff;
+  border-color: #184bc1;
+}
+
+.category-tab.active {
+  background: var(--brand, #184bc1);
+  color: #fff;
+  border-color: var(--brand, #184bc1);
+}
+
+.kiosk-tools {
+  margin-top: auto;
+  width: 100%;
+}
+
+.kiosk-tools .font-control {
+  border: 1px solid #d3e0eb;
+  border-radius: 8px;
+  background: #fff;
+  padding: 4px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.kiosk-tools .font-button {
+  min-width: 0;
+  padding: 8px 3px;
+  font-size: 0.78rem;
+  min-height: 42px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: #53677b;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kiosk-tools .font-button.active {
+  background: var(--brand, #184bc1);
+  color: #fff;
+}
+
+/* ── main 콘텐츠 패널 (col 2, row 1) ── */
+.main-panel,
+.workspace > .main-panel,
+.workspace > .app-main {
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
+  background: #f7fafc;
+}
+
+/* 카탈로그 기본 그리드 */
+.kiosk-catalogue {
+  padding: 20px 24px 0;
+  gap: 16px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 58px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.product-card {
+  padding: 16px 14px 18px;
+  border: 1px solid #c9d9e6;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+
+.product-card:hover {
+  border-color: var(--brand, #184bc1);
+  box-shadow: inset 0 0 0 1px var(--brand, #184bc1);
+}
+
+.product-visual {
+  flex: 1;
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #f8fbfe;
+  border-radius: 8px;
+}
+
+.product-sample-icon {
+  font-size: 44px;
+}
+
+.product-visual .temperature {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #547494;
+  background: #e8f2ff;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.product-info {
+  padding: 12px 0 0;
+}
+
+.product-info h3 {
+  font-size: 1.12rem;
+  line-height: 1.35;
+  font-weight: 650;
+  color: #263a4c;
+  margin-bottom: 8px;
+}
+
+.product-bottom strong {
+  font-size: 1.25rem;
+  font-weight: 750;
+  color: #263a4c;
+}
+
+.menu-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.menu-pagination span {
+  color: #546779;
+  font-size: 1rem;
+}
+
+.page-button {
+  min-height: 44px;
+  min-width: 90px;
+  border: 1px solid #bdcede;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: #315475;
+  cursor: pointer;
+}
+
+.page-button:disabled {
+  background: #eef2f5;
+  border-color: #e1e7ec;
+  color: #98a3ad;
+  cursor: not-allowed;
+}
+
+/* ── 하단 주문 독 (col 1/-1, row 2) ── */
+.compact-order-dock,
+.workspace > .compact-order-dock,
+.workspace > .order-dock,
+.workspace > .app-dock {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 218px 178px;
+  padding: 0;
+  gap: 0;
+  align-items: stretch;
+  border-top: 1px solid #bfd5e7;
+  background: #fff;
+  min-width: 0;
+}
+
+.selected-menu-tray {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 22px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tray-placeholder {
+  color: #8995a1;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.dock-payment-summary {
+  display: grid;
+  grid-template-rows: 1fr 43px;
+  background: #183653;
+  color: #fff;
+  min-width: 0;
+}
+
+.dock-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.dock-amount span {
+  font-size: 0.84rem;
+  color: #c8e7ff;
+}
+
+.dock-amount strong {
+  font-size: 1.8rem;
+  line-height: 1.2;
+  letter-spacing: -0.7px;
+  color: #fff;
+}
+
+.dock-cancel {
+  background: #102941;
+  color: #fff;
+  font-size: 0.95rem;
+  min-height: 43px;
+  border: none;
+  cursor: pointer;
+}
+
+.dock-cancel:hover:not(:disabled) {
+  background: #234969;
+}
+
+.dock-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dock-pay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--brand, #184bc1);
+  color: #fff;
+  min-width: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  padding: 15px;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.dock-pay .icon {
+  width: 40px;
+  height: 40px;
+  stroke-width: 1.5;
+}
+
+.dock-pay:hover:not(:disabled) {
+  background: var(--brand-dark, #123b9b);
+}
+
+.dock-pay:disabled {
+  background: #bcd2fa;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+/* ── start 화면 ── */
+#app .kiosk-start,
+.kiosk-start {
+  height: 100dvh;
+  min-height: 740px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 270px;
+  grid-template-columns: minmax(0, 1fr);
+  background: #97dfff;
+  overflow: hidden;
+  padding: 0;
+  justify-content: stretch;
+}
+
+#app .kiosk-start .photo-only-promo,
+.photo-only-promo {
+  position: relative;
+  inset: auto;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  grid-column: 1;
+  grid-row: 1;
+  overflow: hidden;
+  background: #97dfff;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  min-width: 0;
+}
+
+.start-editorial-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.start-campaign-copy {
+  position: absolute;
+  left: 54%;
+  top: 30%;
+  color: #1045be;
+  z-index: 1;
+}
+
+.start-campaign-copy p {
+  font-size: 1.45rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.start-campaign-copy h1 {
+  font-size: clamp(52px, 6vw, 96px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -4px;
+  margin: 0 0 24px;
+}
+
+#app .kiosk-start .kiosk-entry,
+.kiosk-entry {
+  grid-column: 1;
+  grid-row: 2;
+  background: #fff;
+  border-top: 1px solid #e3e3e3;
+  padding: 20px 36px 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 1;
+  min-width: 0;
+}
+
+#app .kiosk-start .entry-logo,
+.entry-logo {
+  position: absolute;
+  top: 22px;
+  left: auto;
+  right: 5%;
+  width: auto;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: center;
+}
+
+#app .kiosk-start .entry-logo .wordmark,
+.entry-logo .wordmark {
+  font: 900 64px/1.05 'Arial Black', Arial, sans-serif;
+  letter-spacing: -5px;
+  color: #123b9b;
+}
+
+#app .kiosk-start .entry-logo > span:last-child,
+.entry-logo > span:last-child {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: #123b9b;
+  border-left: 1px solid #3d74bf;
+  padding-left: 21px;
+  margin-top: 10px;
+}
+
+#app .kiosk-start .kiosk-type-options,
+.kiosk-type-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  width: min(1100px, 100%);
+  height: 195px;
+}
+
+#app .kiosk-start .kiosk-type-button,
+#app .kiosk-start .kiosk-type-button.take-out,
+.kiosk-type-button {
+  background: #fff;
+  color: #222;
+  border: 2px solid #d7d7d7;
+  border-radius: 20px;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+#app .kiosk-start .kiosk-type-button:hover,
+.kiosk-type-button:hover {
+  background: #f4f4f4;
+  border-color: #8e8e8e;
+}
+
+#app .kiosk-start .kiosk-type-button .icon,
+.kiosk-type-button .icon {
+  width: 58px;
+  height: 58px;
+  stroke-width: 1.3;
+  margin-bottom: 3px;
+  color: #444;
+}
+
+#app .kiosk-start .kiosk-type-button strong,
+.kiosk-type-button strong {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+#app .kiosk-start .kiosk-type-button > span,
+.kiosk-type-button > span {
+  font-size: 1.08rem;
+  color: #444;
+  margin-top: 3px;
+}
+
+#app .kiosk-start .kiosk-start-instruction,
+.kiosk-start-instruction {
+  font-size: 1.14rem;
+  font-weight: 600;
+  color: #444;
+  letter-spacing: -0.4px;
+  line-height: 1.5;
+}
+
+/* ── complete 화면 ── */
+.complete-page {
+  min-height: calc(100dvh - var(--header, 132px));
+  height: calc(100dvh - var(--header, 132px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 70px;
+  padding: 34px 40px;
+  background: #f5f9fd;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
 /* ─── 반응형 ─── */
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: 165px minmax(0, 1fr);
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compact-order-dock {
+    grid-template-columns: minmax(0, 1fr) 180px 146px;
+  }
+}
+
 @media (max-width: 760px) {
-  .app-workspace { min-height: 640px; }
+  #app .kiosk-start,
+  .kiosk-start {
+    padding: 0;
+    grid-template-rows: minmax(0, 1fr) 270px;
+  }
+
+  #app .kiosk-start .entry-logo,
+  .entry-logo {
+    top: 20px;
+    right: 20px;
+  }
+
+  #app .kiosk-start .kiosk-entry,
+  .kiosk-entry {
+    padding: 16px 14px;
+  }
+
+  #app .kiosk-start .kiosk-type-options,
+  .kiosk-type-options {
+    gap: 14px;
+    width: 100%;
+  }
+
+  .start-campaign-copy {
+    left: 53%;
+    top: 30%;
+  }
+
+  .start-campaign-copy h1 {
+    font-size: 2.7rem;
+    letter-spacing: -2px;
+  }
+
+  .start-campaign-copy p {
+    font-size: 0.9rem;
+  }
+
+  .start-campaign-copy > span {
+    font-size: 0.8rem;
+  }
+
+  .start-campaign-copy b {
+    font-size: 1.1rem;
+  }
+
+  .start-editorial-photo {
+    object-position: 43% center;
+  }
+
+  .workspace {
+    grid-template-columns: 110px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) 126px;
+    min-height: 640px;
+  }
+
+  :root[data-font="max"] .workspace {
+    grid-template-rows: minmax(0, 1fr) 145px;
+  }
+
+  .category-tabs {
+    padding: 10px 7px;
+    gap: 10px;
+  }
+
+  .category-tab {
+    padding: 8px;
+    font-size: 0.82rem;
+    min-height: 50px;
+  }
+
+  .kiosk-tools .font-control {
+    grid-template-columns: 1fr;
+  }
+
+  .kiosk-tools .font-button {
+    min-height: 36px;
+    font-size: 0.72rem;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .compact-order-dock {
+    grid-template-columns: minmax(0, 1fr) 115px 91px;
+  }
+
+  .dock-amount strong {
+    font-size: 1.1rem;
+  }
+
+  .dock-pay {
+    font-size: 0.96rem;
+    gap: 6px;
+    padding: 9px 4px;
+  }
+
+  .dock-pay .icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .complete-page {
+    height: auto;
+    flex-direction: column;
+    padding: 26px 18px;
+    gap: 28px;
+  }
 }
