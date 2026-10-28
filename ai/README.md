@@ -2,6 +2,8 @@
 
 현재 AI 코드는 로컬 음성 파일을 한국어 텍스트로 변환하는 기존 `stt.py`, 별도 AI 서버의 HTTP 음성 업로드 API, 그리고 A4000에서 `medium`과 `large-v3`를 비교하는 도구로 구성됩니다. STT 뒤의 메뉴 검색·SLM 주문 후보 생성과 Backend 주문 확정은 아직 연결되지 않았습니다.
 
+로컬 SLM을 연결한 텍스트 메뉴 대화는 [A4000 Windows 실행 안내](TEXT_DIALOGUE_WINDOWS.md)를 참고하세요. `text_dialogue.py`는 Ollama의 Qwen3 4B Instruct로 조건과 설명 기반 추천을 추출하고, 메뉴 검증·질문·테스트 장바구니까지 실행합니다. STT/TTS와 실제 주문 API 연결은 후속 단계입니다.
+
 ## 설치
 
 AI 서버에서 Python 가상환경을 만든 뒤 의존성을 설치합니다.
