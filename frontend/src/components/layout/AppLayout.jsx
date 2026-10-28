@@ -4,6 +4,18 @@ import KioskHeader from "./KioskHeader"
 import StepBar from "./StepBar"
 import Toast from "../common/Toast"
 import Overlay from "../common/Overlay"
+import CategoryTabs from "../menu/CategoryTabs"
+import ProductGrid from "../menu/ProductGrid"
+import MenuPagination from "../menu/MenuPagination"
+import ProductModal from "../menu/ProductModal"
+import {
+  MENUS,
+  CATEGORIES,
+  money,
+  total,
+  optionsText,
+  lineKey,
+} from "../menu/menuData"
 
 /**
  * AppLayout
@@ -41,327 +53,454 @@ import Overlay from "../common/Overlay"
  *   children         {ReactNode} 대체 슬롯
  */
 function AppLayout({
-    page = "start",
-    currentStep = 1,
-    onHome,
-    elapsed = "",
-    font = 0,
-    onFont,
-    isCheckoutOpen = false,
-    toast: toastProps = { message: "", visible: false },
-    overlay: overlayProps = { visible: false },
-    startSlot,
-    categoryTabsSlot,
-    mainSlot,
-    orderDockSlot,
-    completeSlot,
-    children,
+  page = "start",
+  currentStep = 1,
+  onHome,
+  elapsed = "",
+  font = 0,
+  onFont,
+  isCheckoutOpen = false,
+  toast: toastProps = { message: "", visible: false },
+  overlay: overlayProps = { visible: false },
+  startSlot,
+  categoryTabsSlot,
+  mainSlot,
+  orderDockSlot,
+  completeSlot,
+  children,
 }) {
-    const isStart = page === "start"
-    const isComplete = page === "complete"
+  const isStart = page === "start"
+  const isComplete = page === "complete"
 
-    // 폰트 및 화면 데이터 속성 동기화
-    useEffect(() => {
-        const fontNames = ["normal", "large", "max"]
-        document.documentElement.dataset.font = fontNames[font] || "normal"
-        document.documentElement.dataset.screen = page
-    }, [font, page])
+  // 기본 메뉴 탐색 및 장바구니 상태 관리
+  const [activeCategory, setActiveCategory] = useState("all")
+  const [menuPage, setMenuPage] = useState(0)
+  const [cart, setCart] = useState([])
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [internalToast, setInternalToast] = useState({
+    message: "",
+    visible: false,
+  })
 
-    // 경과 시간 자동 카운트
-    const [internalElapsed, setInternalElapsed] = useState("00:00")
-    useEffect(() => {
-        if (elapsed || isStart) return
+  // 폰트 및 화면 데이터 속성 동기화
+  useEffect(() => {
+    const fontNames = ["normal", "large", "max"]
+    document.documentElement.dataset.font = fontNames[font] || "normal"
+    document.documentElement.dataset.screen = page
+  }, [font, page])
 
-        const startTime = Date.now()
-        const timer = setInterval(() => {
-            const seconds = Math.floor((Date.now() - startTime) / 1000)
-            const m = String(Math.floor(seconds / 60)).padStart(2, "0")
-            const s = String(seconds % 60).padStart(2, "0")
-            setInternalElapsed(`${m}:${s}`)
-        }, 1000)
+  // 경과 시간 자동 카운트
+  const [internalElapsed, setInternalElapsed] = useState("00:00")
+  useEffect(() => {
+    if (elapsed || isStart) return
 
-        return () => clearInterval(timer)
-    }, [isStart, elapsed])
+    const startTime = Date.now()
+    const timer = setInterval(() => {
+      const seconds = Math.floor((Date.now() - startTime) / 1000)
+      const m = String(Math.floor(seconds / 60)).padStart(2, "0")
+      const s = String(seconds % 60).padStart(2, "0")
+      setInternalElapsed(`${m}:${s}`)
+    }, 1000)
 
-    const activeElapsed = elapsed || (isStart ? "00:00" : internalElapsed)
-    const stepNumber = isComplete ? 5 : currentStep
+    return () => clearInterval(timer)
+  }, [isStart, elapsed])
 
-    // 기본 슬롯 미제공 시 레퍼런스(./frontend/app.js)와 완전히 일치하는 기본 시작 화면 렌더러
-    const renderDefaultStart = () => (
-        <main id="main" className="kiosk-start">
-            <section
-                className="kiosk-promo photo-only-promo"
-                aria-label="모그커피 음료"
+  const activeElapsed = elapsed || (isStart ? "00:00" : internalElapsed)
+  const stepNumber = isComplete ? 5 : currentStep
+
+  const showToast = (message) => {
+    setInternalToast({ message, visible: true })
+    setTimeout(() => {
+      setInternalToast({ message: "", visible: false })
+    }, 2500)
+  }
+
+  // 폰트 단계 및 카테고리에 따른 메뉴 필터링 및 페이징 계산
+  const pageSize = font === 2 ? 2 : 6
+  const filteredProducts =
+    activeCategory === "all"
+      ? MENUS
+      : MENUS.filter((m) => m.category === activeCategory)
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize))
+  const safePage = Math.min(menuPage, totalPages - 1)
+  const visibleProducts = filteredProducts.slice(
+    safePage * pageSize,
+    (safePage + 1) * pageSize
+  )
+
+  const handleSelectCategory = (catId) => {
+    setActiveCategory(catId)
+    setMenuPage(0)
+  }
+
+  const handlePageChange = (newPage) => {
+    setMenuPage(Math.max(0, Math.min(totalPages - 1, newPage)))
+  }
+
+  const handleAddToCart = (product, options) => {
+    const key = lineKey(product.id, options)
+    setCart((prevCart) => {
+      const existingIdx = prevCart.findIndex((line) => line.key === key)
+      if (existingIdx >= 0) {
+        const next = [...prevCart]
+        next[existingIdx] = {
+          ...next[existingIdx],
+          quantity: Math.min(99, next[existingIdx].quantity + options.quantity),
+        }
+        return next
+      }
+      return [...prevCart, { ...options, id: product.id, key }]
+    })
+    showToast(`${product.name} ${options.quantity}개를 담았어요.`)
+  }
+
+  const handleRemoveFromCart = (index) => {
+    setCart((prev) => {
+      const item = prev[index]
+      const m = MENUS.find((menu) => menu.id === item?.id)
+      if (m) showToast(`${m.name}를 삭제했어요.`)
+      return prev.filter((_, i) => i !== index)
+    })
+  }
+
+  const handleCartQty = (index, delta) => {
+    setCart((prev) => {
+      const next = [...prev]
+      const current = next[index]
+      if (!current) return prev
+      const newQty = current.quantity + delta
+      if (newQty < 1 || newQty > 99) return prev
+      next[index] = { ...current, quantity: newQty }
+      return next
+    })
+  }
+
+  const handleClearCart = () => {
+    setCart([])
+    showToast("선택한 메뉴를 모두 취소했어요.")
+  }
+
+  // 기본 시작 화면
+  const renderDefaultStart = () => (
+    <main id="main" className="kiosk-start">
+      <section
+        className="kiosk-promo photo-only-promo"
+        aria-label="모그커피 음료"
+      >
+        <img
+          className="start-editorial-photo"
+          src="/StartPage.png"
+          alt="하늘색 배경 위 커다란 아이스 아메리카노"
+        />
+        <div className="start-campaign-copy">
+          <p>모그커피와 함께</p>
+          <h1>
+            시원하게
+            <br />한 모금!
+          </h1>
+        </div>
+      </section>
+      <section className="kiosk-entry" aria-label="주문 시작">
+        <div className="entry-logo">
+          <span className="wordmark">
+            mog<span className="brand-dot">.</span>
+          </span>
+          <span>모그커피</span>
+        </div>
+        <div className="kiosk-type-options">
+          <button
+            type="button"
+            className="kiosk-type-button dine-in"
+            data-action="begin"
+            data-value="DINE_IN"
+            onClick={() => onHome?.("DINE_IN")}
+          >
+            <svg
+              className="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
             >
-                <img
-                    className="start-editorial-photo"
-                    src="/StartPage.png"
-                    alt="하늘색 배경 위 커다란 아이스 아메리카노"
-                />
-                <div className="start-campaign-copy">
-                    <p>모그커피와 함께</p>
-                    <h1>
-                        시원하게
-                        <br />한 모금!
-                    </h1>
-                </div>
-            </section>
-            <section className="kiosk-entry" aria-label="주문 시작">
-                <div className="entry-logo">
-                    <span className="wordmark">
-                        mog<span className="brand-dot">.</span>
-                    </span>
-                    <span>모그커피</span>
-                </div>
-                <div className="kiosk-type-options">
-                    <button
-                        type="button"
-                        className="kiosk-type-button dine-in"
-                        data-action="begin"
-                        data-value="DINE_IN"
-                        onClick={() => onHome?.("DINE_IN")}
-                    >
-                        <svg
-                            className="icon"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M4 8h12v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Zm12 1h2a3 3 0 0 1 0 6h-2M7 3v2m5-2v2" />
-                        </svg>
-                        <strong>매장</strong>
-                        <span>매장에서 드시기</span>
-                    </button>
-                    <button
-                        type="button"
-                        className="kiosk-type-button take-out"
-                        data-action="begin"
-                        data-value="TAKEOUT"
-                        onClick={() => onHome?.("TAKEOUT")}
-                    >
-                        <svg
-                            className="icon"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M5 7h14l1 14H4L5 7Zm4 1V6a3 3 0 0 1 6 0v2" />
-                        </svg>
-                        <strong>포장</strong>
-                        <span>가지고 가기</span>
-                    </button>
-                </div>
-                <p className="kiosk-start-instruction">
-                    주문 방법을 선택해 주세요
-                </p>
-            </section>
-        </main>
-    )
+              <path d="M4 8h12v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Zm12 1h2a3 3 0 0 1 0 6h-2M7 3v2m5-2v2" />
+            </svg>
+            <strong>매장</strong>
+            <span>매장에서 드시기</span>
+          </button>
+          <button
+            type="button"
+            className="kiosk-type-button take-out"
+            data-action="begin"
+            data-value="TAKEOUT"
+            onClick={() => onHome?.("TAKEOUT")}
+          >
+            <svg
+              className="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 7h14l1 14H4L5 7Zm4 1V6a3 3 0 0 1 6 0v2" />
+            </svg>
+            <strong>포장</strong>
+            <span>가지고 가기</span>
+          </button>
+        </div>
+        <p className="kiosk-start-instruction">주문 방법을 선택해 주세요</p>
+      </section>
+    </main>
+  )
 
-    const renderDefaultCategoryTabs = () => (
-        <nav className="category-tabs" aria-label="메뉴 카테고리">
-            <div className="category-tab-list">
-                {["전체 메뉴", "커피", "논커피", "프라페", "베이커리"].map(
-                    (c, i) => (
-                        <button
-                            key={c}
-                            type="button"
-                            className={`category-tab${
-                                i === 0 ? " active" : ""
-                            }`}
-                            aria-pressed={i === 0}
-                        >
-                            <span>{c}</span>
-                        </button>
-                    )
-                )}
-            </div>
-            <div className="kiosk-tools">
-                <div
-                    className="font-control"
-                    role="group"
-                    aria-label="글자 크기"
-                >
-                    {["일반", "큰글씨", "최대"].map((label, idx) => (
-                        <button
-                            key={label}
-                            type="button"
-                            className={`font-button${
-                                font === idx ? " active" : ""
-                            }`}
-                            aria-pressed={font === idx}
-                            onClick={() => onFont?.(idx)}
-                        >
-                            {label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-        </nav>
-    )
+  // 기본 카테고리 탭 (CategoryTabs 컴포넌트 연동)
+  const renderDefaultCategoryTabs = () => (
+    <CategoryTabs
+      categories={CATEGORIES}
+      activeCategory={activeCategory}
+      onSelectCategory={handleSelectCategory}
+      font={font}
+      onFont={onFont}
+    />
+  )
 
-    const renderDefaultMainPanel = () => (
-        <section className="kiosk-catalogue">
-            <div className="product-grid" data-page-size="6">
-                {[
-                    { name: "아메리카노", price: "3,000원", temp: "HOT / ICE" },
-                    {
-                        name: "바닐라 크림 라떼",
-                        price: "4,900원",
-                        temp: "HOT / ICE",
-                    },
-                    { name: "카페 라떼", price: "4,200원", temp: "HOT / ICE" },
-                    {
-                        name: "제주 말차 라떼",
-                        price: "5,200원",
-                        temp: "HOT / ICE",
-                    },
-                    { name: "생딸기 케이크", price: "6,500원", temp: "BAKERY" },
-                    { name: "버터 크루아상", price: "3,800원", temp: "BAKERY" },
-                ].map((item) => (
-                    <div key={item.name} className="product-card">
-                        <div className="product-visual">
-                            <span
-                                className="product-sample-icon"
-                                aria-hidden="true"
-                            >
-                                ☕
-                            </span>
-                            <span className="temperature">{item.temp}</span>
-                        </div>
-                        <div className="product-info">
-                            <h3>{item.name}</h3>
-                            <div className="product-bottom">
-                                <strong>{item.price}</strong>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            <nav className="menu-pagination" aria-label="메뉴 페이지">
-                <button type="button" className="page-button" disabled>
-                    이전
-                </button>
-                <span>
-                    <strong>1</strong> / 2
-                </span>
-                <button type="button" className="page-button">
-                    다음
-                </button>
-            </nav>
-        </section>
-    )
+  // 기본 메인 패널 (ProductGrid 및 MenuPagination 연동)
+  const renderDefaultMainPanel = () => (
+    <section className="kiosk-catalogue">
+      <ProductGrid
+        products={visibleProducts}
+        pageSize={pageSize}
+        onSelectProduct={(p) => setSelectedProduct(p)}
+      />
+      <MenuPagination
+        currentPage={safePage + 1}
+        totalPages={totalPages}
+        onPrev={() => handlePageChange(safePage - 1)}
+        onNext={() => handlePageChange(safePage + 1)}
+        onPageChange={(p) => handlePageChange(p - 1)}
+      />
+    </section>
+  )
 
-    const renderDefaultOrderDock = () => (
-        <section
-            className="order-dock compact-order-dock"
-            aria-label="선택한 메뉴와 결제"
-        >
-            <div className="selected-menu-tray">
-                <div className="tray-items">
-                    <div className="tray-placeholder">
-                        <span>선택한 메뉴가 여기에 담깁니다</span>
-                    </div>
-                </div>
-            </div>
-            <div className="dock-payment-summary">
-                <div className="dock-amount">
-                    <span>총 결제 금액</span>
-                    <strong>0원</strong>
-                </div>
-                <button type="button" className="dock-cancel" disabled>
-                    전체 취소
-                </button>
-            </div>
-            <button type="button" className="dock-pay" disabled>
-                <svg
-                    className="icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                >
-                    <path d="M4 7V5l13-3v5M3 7h17v14H3V7Z" />
-                    <path d="M16 12h6v5h-6a2.5 2.5 0 0 1 0-5Z" />
-                </svg>
-                <span>결제하기</span>
-            </button>
-        </section>
-    )
+  // 기본 주문 독 (선택 메뉴 트레이 + 결제 요약)
+  const renderDefaultOrderDock = () => {
+    const dockPageSize = 3
+    const dockLines = cart.slice(0, dockPageSize)
+    const cartTotal = total(cart)
 
     return (
-        <div
-            id="app"
-            className="app-layout"
-            data-page={page}
-            data-screen={page}
-        >
-            <a href="#main" className="skip-link">
-                주문 화면으로 바로 가기
-            </a>
-
-            {/* ── 1. start 화면 ── */}
-            {isStart && (startSlot || children || renderDefaultStart())}
-
-            {/* ── 2. start 제외 화면: 헤더 + 스텝바 공통 ── */}
-            {!isStart && (
-                <>
-                    <KioskHeader
-                        onHome={onHome}
-                        elapsed={activeElapsed}
-                        showHome={true}
-                        language="한국어"
-                    />
-                    <StepBar
-                        currentStep={stepNumber}
-                        isCheckoutOpen={isCheckoutOpen}
-                    />
-
-                    {/* 완료 화면 */}
-                    {isComplete ? (
-                        completeSlot || children
-                    ) : (
-                        /* 일반 주문 화면: 카테고리 레일 + 메인 패널 + 하단 독 그리드 */
-                        <div className="workspace">
-                            {categoryTabsSlot || renderDefaultCategoryTabs()}
-
-                            <main id="main" className="main-panel">
-                                {mainSlot ||
-                                    children ||
-                                    renderDefaultMainPanel()}
-                            </main>
-
-                            {orderDockSlot || renderDefaultOrderDock()}
-                        </div>
-                    )}
-                </>
+      <section
+        className="order-dock compact-order-dock"
+        aria-label="선택한 메뉴와 결제"
+      >
+        <div className="selected-menu-tray">
+          <div className="tray-items">
+            {cart.length === 0 ? (
+              <div className="tray-placeholder">
+                <span>선택한 메뉴가 여기에 담깁니다</span>
+              </div>
+            ) : (
+              dockLines.map((line, idx) => {
+                const m = MENUS.find((menu) => menu.id === line.id)
+                if (!m) return null
+                return (
+                  <article
+                    key={line.key || idx}
+                    className="tray-item"
+                    aria-label={`${m.name} ${optionsText(line)}`}
+                  >
+                    <button
+                      type="button"
+                      className="tray-product"
+                      onClick={() => setSelectedProduct(m)}
+                      aria-label={`${m.name} ${optionsText(line)} 옵션 변경`}
+                    >
+                      <div
+                        className={`product-photo photo-${m.id}`}
+                        role="img"
+                        aria-label={m.name}
+                      />
+                      <span>{m.name}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="tray-remove"
+                      onClick={() => handleRemoveFromCart(idx)}
+                      aria-label={`${m.name} 삭제`}
+                    >
+                      <svg
+                        className="icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="m6 6 12 12M6 18 18 6" />
+                      </svg>
+                    </button>
+                    <div className="quantity">
+                      <button
+                        type="button"
+                        onClick={() => handleCartQty(idx, -1)}
+                        disabled={line.quantity <= 1}
+                        aria-label={`${m.name} 수량 줄이기`}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          width="16"
+                          height="16"
+                          aria-hidden="true"
+                        >
+                          <path d="M5 12h14" />
+                        </svg>
+                      </button>
+                      <strong aria-label={`수량 ${line.quantity}`}>
+                        {line.quantity}
+                      </strong>
+                      <button
+                        type="button"
+                        onClick={() => handleCartQty(idx, 1)}
+                        disabled={line.quantity >= 99}
+                        aria-label={`${m.name} 수량 늘리기`}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          width="16"
+                          height="16"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 5v14M5 12h14" />
+                        </svg>
+                      </button>
+                    </div>
+                  </article>
+                )
+              })
             )}
-
-            {/* ── 전역 레이어 ── */}
-            <Toast
-                message={toastProps?.message || ""}
-                visible={toastProps?.visible || false}
-            />
-
-            <Overlay
-                visible={overlayProps?.visible || false}
-                onClose={overlayProps?.onClose}
-            >
-                {overlayProps?.children}
-            </Overlay>
+          </div>
         </div>
+        <div className="dock-payment-summary">
+          <div className="dock-amount">
+            <span>총 결제 금액</span>
+            <strong aria-live="polite">{money(cartTotal)}</strong>
+          </div>
+          <button
+            type="button"
+            className="dock-cancel"
+            disabled={cart.length === 0}
+            onClick={handleClearCart}
+          >
+            전체 취소
+          </button>
+        </div>
+        <button
+          type="button"
+          className="dock-pay"
+          disabled={cart.length === 0}
+          onClick={() => {}}
+        >
+          <svg
+            className="icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 7V5l13-3v5M3 7h17v14H3V7Z" />
+            <path d="M16 12h6v5h-6a2.5 2.5 0 0 1 0-5Z" />
+          </svg>
+          <span>결제하기</span>
+        </button>
+      </section>
     )
+  }
+
+  const activeToast = toastProps.visible ? toastProps : internalToast
+
+  return (
+    <div id="app" className="app-layout" data-page={page} data-screen={page}>
+      <a href="#main" className="skip-link">
+        주문 화면으로 바로 가기
+      </a>
+
+      {/* ── 1. start 화면 ── */}
+      {isStart && (startSlot || children || renderDefaultStart())}
+
+      {/* ── 2. start 제외 화면: 헤더 + 스텝바 공통 ── */}
+      {!isStart && (
+        <>
+          <KioskHeader
+            onHome={onHome}
+            elapsed={activeElapsed}
+            showHome={true}
+            language="한국어"
+          />
+          <StepBar
+            currentStep={stepNumber}
+            isCheckoutOpen={isCheckoutOpen}
+          />
+
+          {/* 완료 화면 */}
+          {isComplete ? (
+            completeSlot || children
+          ) : (
+            /* 일반 주문 화면: 카테고리 레일 + 메인 패널 + 하단 독 그리드 */
+            <div className="workspace">
+              {categoryTabsSlot || renderDefaultCategoryTabs()}
+
+              <main id="main" className="main-panel">
+                {mainSlot || children || renderDefaultMainPanel()}
+              </main>
+
+              {orderDockSlot || renderDefaultOrderDock()}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── 상품 옵션 선택 모달 ── */}
+      <ProductModal
+        product={selectedProduct}
+        isOpen={Boolean(selectedProduct)}
+        onClose={() => setSelectedProduct(null)}
+        onAddToCart={handleAddToCart}
+      />
+
+      {/* ── 전역 레이어 ── */}
+      <Toast
+        message={activeToast?.message || ""}
+        visible={activeToast?.visible || false}
+      />
+
+      <Overlay
+        visible={overlayProps?.visible || false}
+        onClose={overlayProps?.onClose}
+      >
+        {overlayProps?.children}
+      </Overlay>
+    </div>
+  )
 }
 
 export default AppLayout

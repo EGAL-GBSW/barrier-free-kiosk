@@ -1,0 +1,80 @@
+/* ─── MenuPagination ─────────────────────────────────────────────
+ *  레퍼런스 ./frontend/kiosk.css 기준
+ * ──────────────────────────────────────────────────────────────── */
+
+.menu-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: 10px 0 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.menu-pagination span {
+    color: #546779;
+    font-size: 1rem;
+    min-width: 50px;
+    text-align: center;
+}
+
+.menu-pagination strong {
+    color: #263a4c;
+    font-weight: 750;
+}
+
+.page-button {
+    min-height: 48px;
+    min-width: 100px;
+    padding: 0 16px;
+    border: 1px solid #bdcede;
+    border-radius: 7px;
+    background: #fff;
+    font-size: 1rem;
+    font-weight: 650;
+    color: #315475;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.page-button:hover:not(:disabled) {
+    background: #e7f4ff;
+    border-color: #184bc1;
+}
+
+.page-button:disabled {
+    background: #eef2f5;
+    border-color: #e1e7ec;
+    color: #98a3ad;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+.page-button .icon {
+    width: 20px;
+    height: 20px;
+}
+
+@media (max-width: 760px) {
+    .menu-pagination {
+        gap: 12px;
+        padding: 6px 0 4px;
+    }
+    .page-button {
+        min-height: 42px;
+        min-width: 80px;
+        padding: 0 10px;
+        font-size: 0.88rem;
+    }
+    .page-button .icon {
+        width: 16px;
+        height: 16px;
+    }
+}
