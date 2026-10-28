@@ -4,3 +4,23 @@ node_modules/
 !.env.example
 *.log
 .DS_Store
+
+# AI / Python
+ai/.venv/
+ai/venv/
+**pycache**/
+*.pyc
+*.pyo
+ai/.env
+ai/audio/*.wav
+ai/audio/*.mp3
+ai/audio/*.m4a
+ai/audio/*.webm
+!ai/audio/.gitkeep
+ai/benchmark_manifest.csv
+ai/dataset_references.csv
+ai/benchmark_results/
+ai/data/*
+!ai/data/.gitkeep
+ai/.cache/
+ai/models/
