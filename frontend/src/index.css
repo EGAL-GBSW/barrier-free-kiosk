@@ -1,0 +1,105 @@
+/* ─── 전역 CSS 변수 ─────────────────────────────────── */
+:root {
+  font-family: 'DM Sans', 'Noto Sans KR', sans-serif;
+  font-synthesis: none;
+
+  /* 브랜드 색상 (파란색 계열) */
+  --brand:        #184bc1;   /* 파란색 — 선택·강조 포인트 */
+  --brand-mid:    #1d56d8;   /* 중간 파란 */
+  --brand-light:  #e7f4ff;   /* 연한 파란 — 배경 틴트 */
+  --brand-dark:   #123b9b;   /* 어두운 파란 — hover */
+
+  /* 중립 색상 */
+  --bg:           #f7fafc;   /* 전체 배경 */
+  --surface:      #ffffff;   /* 카드·패널 배경 */
+  --surface-alt:  #f1f7fc;   /* 보조 배경 */
+  --line:         #dce7ef;   /* 구분선 */
+  --muted:        #8995a1;   /* 보조 텍스트 */
+  --ink:          #263a4c;   /* 기본 텍스트 */
+
+  /* 시멘틱 */
+  --accent:       var(--brand);
+  --accent-soft:  var(--brand-light);
+  --danger:       #c0392b;
+
+  /* 레이아웃
+   * 헤더 영역 = kiosk-header(66px) + stepbar(66px) = 132px
+   */
+  --header:       132px;
+  --header-bar:   66px;    /* kiosk-header 자체 높이 */
+  --stepbar:      66px;
+  --dock:         132px;
+
+  /* 타이포 */
+  font-size: 16px;
+  color: var(--ink);
+  background: #f2f2f2;
+  color-scheme: light;
+}
+
+:root[data-font="large"] { font-size: 19px; }
+:root[data-font="max"]   { font-size: 22px; --dock: 155px; }
+
+/* ─── 리셋 ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { min-height: 100%; overscroll-behavior: none; }
+body   { margin: 0; }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { word-break: keep-all; }
+p { line-height: 1.7; }
+strong { font-weight: 700; }
+
+button, input { font: inherit; color: inherit; }
+button {
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+button:disabled              { cursor: not-allowed; opacity: 0.35; }
+button:active:not(:disabled) { transform: translateY(1px); }
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 4px;
+}
+
+/* ─── 접근성 유틸 ────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.skip-link {
+  position: fixed;
+  left: 15px; top: -100px;
+  background: var(--brand);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  z-index: 200;
+  text-decoration: none;
+}
+.skip-link:focus { top: 12px; }
+
+/* ─── 앱 루트 ────────────────────────────────────────── */
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: #f2f2f2;
+}
+
+/* ─── 반응형 변수 보정 ───────────────────────────────── */
+@media (max-width: 1100px) {
+  :root { --stepbar: 64px; --header: 130px; }
+}
+@media (max-width: 760px) {
+  :root { --header: 124px; --header-bar: 60px; --stepbar: 64px; --dock: 126px; }
+  :root[data-font="max"] { --dock: 145px; }
+}

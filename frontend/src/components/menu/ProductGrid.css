@@ -1,0 +1,36 @@
+/* ─── ProductGrid ────────────────────────────────────────────────
+ *  레퍼런스 ./frontend/kiosk.css 기준
+ * ──────────────────────────────────────────────────────────────── */
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-content: start;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.product-grid[data-page-size="4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-grid[data-page-size="2"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+    .product-grid {
+        gap: 12px;
+    }
+}
+
+@media (max-width: 760px) {
+    .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+}

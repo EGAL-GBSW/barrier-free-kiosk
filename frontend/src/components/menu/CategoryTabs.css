@@ -1,0 +1,120 @@
+/* ─── CategoryTabs ────────────────────────────────────────────────
+ *  레퍼런스 ./frontend/app.js 및 ./frontend/kiosk.css 기준
+ * ──────────────────────────────────────────────────────────────── */
+
+.category-tabs {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 14px 16px 18px;
+    background: #f1f7fc;
+    border-right: 1px solid #dce7ef;
+    min-height: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.category-tab-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 0 1 auto;
+}
+
+.category-tab {
+    width: 100%;
+    min-height: 60px;
+    padding: 12px 17px;
+    border: 1px solid #c6d7e6;
+    border-radius: 8px;
+    background: #fff;
+    color: #344c64;
+    font-size: 1.08rem;
+    font-weight: 650;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.category-tab:hover:not(.active) {
+    background: #e7f4ff;
+    border-color: #184bc1;
+}
+
+.category-tab.active {
+    background: var(--brand, #184bc1);
+    color: #fff;
+    border-color: var(--brand, #184bc1);
+}
+
+.kiosk-tools {
+    margin-top: auto;
+    width: 100%;
+}
+
+.kiosk-tools .font-control {
+    border: 1px solid #d3e0eb;
+    border-radius: 8px;
+    background: #fff;
+    padding: 4px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2px;
+}
+
+.kiosk-tools .font-button {
+    min-width: 0;
+    padding: 8px 3px;
+    font-size: 0.78rem;
+    min-height: 42px;
+    border-radius: 5px;
+    border: 0;
+    background: transparent;
+    color: #555;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.15s, color 0.15s;
+}
+
+.kiosk-tools .font-button:hover:not(.active) {
+    background: #f0f4f8;
+}
+
+.kiosk-tools .font-button.active {
+    background: #e8e8e8;
+    color: #222;
+}
+
+@media (max-width: 1100px) {
+    .category-tabs {
+        padding: 14px 10px;
+        gap: 12px;
+    }
+    .category-tab {
+        font-size: 0.95rem;
+        padding: 10px 12px;
+        min-height: 50px;
+    }
+}
+
+@media (max-width: 760px) {
+    .category-tabs {
+        padding: 10px 7px;
+        gap: 8px;
+    }
+    .category-tab {
+        padding: 8px 6px;
+        font-size: 0.82rem;
+        min-height: 42px;
+        text-align: center;
+    }
+    .kiosk-tools .font-button {
+        font-size: 0.72rem;
+        padding: 6px 2px;
+        min-height: 36px;
+    }
+}

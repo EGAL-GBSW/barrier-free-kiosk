@@ -1,0 +1,177 @@
+/* ─── ProductCard ────────────────────────────────────────────────
+ *  레퍼런스 ./frontend/kiosk.css 및 ./frontend/style.css 기준
+ * ──────────────────────────────────────────────────────────────── */
+
+.product-card {
+    padding: 14px 12px 14px;
+    border: 1px solid #c9d9e6;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+    min-height: 0;
+}
+
+.product-card:hover {
+    border-color: var(--brand, #184bc1);
+    box-shadow: inset 0 0 0 1px var(--brand, #184bc1);
+    background: #fff;
+}
+
+.product-visual {
+    flex: 1;
+    min-height: 80px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: transparent;
+    overflow: hidden;
+}
+
+/* public/menu-collection.png 스프라이트 이미지 */
+.product-photo {
+    width: 100px;
+    height: 100px;
+    aspect-ratio: 1;
+    background-image: url("/menu-collection.png");
+    background-size: 300% 300%;
+    background-repeat: no-repeat;
+    mix-blend-mode: multiply;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+/* 3x3 스프라이트 위치 */
+.photo-1 {
+    background-position: 0% 0%;
+}
+.photo-2 {
+    background-position: 50% 0%;
+}
+.photo-3 {
+    background-position: 100% 0%;
+}
+.photo-4 {
+    background-position: 0% 50%;
+}
+.photo-5 {
+    background-position: 50% 50%;
+}
+.photo-6 {
+    background-position: 100% 50%;
+}
+.photo-7 {
+    background-position: 0% 100%;
+}
+.photo-8 {
+    background-position: 50% 100%;
+}
+.photo-9 {
+    background-position: 100% 100%;
+}
+
+.product-visual .badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.badge.best {
+    background: #ffe8b2;
+    color: #8c5d00;
+}
+
+.badge.new {
+    background: #e1f5fe;
+    color: #0277bd;
+}
+
+.product-visual .temperature {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #686868;
+    background: rgba(245, 242, 233, 0.85);
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+.product-info {
+    padding: 12px 0 0;
+    background: transparent;
+    width: 100%;
+}
+
+.product-info h3 {
+    font-size: 1.15rem;
+    line-height: 1.35;
+    font-weight: 650;
+    color: #263a4c;
+    margin: 0 0 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product-bottom {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.product-bottom strong {
+    font-size: 1.28rem;
+    font-weight: 750;
+    color: #263a4c;
+}
+
+@media (max-width: 1100px) {
+    .product-visual {
+        height: 110px;
+    }
+    .product-photo {
+        width: 100px;
+        height: 100px;
+    }
+    .product-info h3 {
+        font-size: 1rem;
+    }
+    .product-bottom strong {
+        font-size: 1.15rem;
+    }
+}
+
+@media (max-width: 760px) {
+    .product-card {
+        padding: 8px 5px 12px;
+    }
+    .product-visual {
+        height: 90px;
+    }
+    .product-photo {
+        width: 80px;
+        height: 80px;
+    }
+    .product-info h3 {
+        font-size: 0.84rem;
+        margin-bottom: 6px;
+    }
+    .product-bottom strong {
+        font-size: 1rem;
+    }
+}

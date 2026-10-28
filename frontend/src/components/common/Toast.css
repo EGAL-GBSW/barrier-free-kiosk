@@ -1,0 +1,25 @@
+/* ─── Toast ──────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translate(-50%, 14px);
+  background: #363636;
+  color: #f0f0f0;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.22);
+  padding: 14px 24px;
+  border-radius: 10px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  font-size: 0.9rem;
+  font-weight: 600;
+  max-width: 90vw;
+  white-space: nowrap;
+}
+
+.toast--show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

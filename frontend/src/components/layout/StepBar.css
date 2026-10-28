@@ -1,0 +1,168 @@
+/* ─── StepBar ────────────────────────────────────────────────────
+ *  레퍼런스 ./frontend/kiosk.css 기준
+ *  배경: 흰색, 하단 구분선(#dce7ef)
+ *  done:   연한 파랑 배경(#e8f2ff) + 파란 체크(#184bc1)
+ *  active: 파란 배경(#184bc1) + 흰색 숫자
+ *  구분선: flex: 1 가는 선
+ * ──────────────────────────────────────────────────────────────── */
+
+.order-stepbar {
+  height: var(--stepbar, 66px);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  gap: 18px;
+  padding: 0 28px;
+  background: #fff;
+  border-bottom: 1px solid #dce7ef;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 개별 단계 */
+.order-step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: #8995a1;
+  font-size: 0.94rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* 단계 사이 가는 선 */
+.order-step:not(:last-child)::after {
+  content: "";
+  height: 1px;
+  background: #d7e1eb;
+  flex: 1;
+  min-width: 12px;
+  margin-left: 8px;
+  letter-spacing: 0;
+}
+
+/* 원형 번호 / 아이콘 컨테이너 */
+.step-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 33px;
+  height: 33px;
+  border: 1.5px solid #c5ced7;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #8794a1;
+  background: #fff;
+}
+
+.step-circle .icon {
+  width: 21px;
+  height: 21px;
+  stroke-width: 2.8;
+  vertical-align: middle;
+}
+
+/* 완료된 단계 */
+.order-step.done {
+  color: #547494;
+}
+
+.order-step.done .step-circle {
+  background: #e8f2ff;
+  border-color: #e8f2ff;
+  color: var(--brand, #184bc1);
+}
+
+/* 현재 진행 단계 */
+.order-step.active {
+  color: var(--brand, #184bc1);
+}
+
+.order-step.active .step-circle {
+  background: var(--brand, #184bc1);
+  border-color: var(--brand, #184bc1);
+  color: #fff;
+}
+
+/* ── 토스 체크아웃 모달 열림 시 스텝 강조 ── */
+.order-stepbar[data-checkout-open] .order-step:nth-child(2),
+.order-stepbar[data-checkout-open] .order-step:nth-child(3) {
+  color: #464646;
+}
+
+.order-stepbar[data-checkout-open] .order-step:nth-child(2) .step-circle,
+.order-stepbar[data-checkout-open] .order-step:nth-child(3) .step-circle {
+  border-color: #454545;
+  background: #454545;
+  color: #fff;
+}
+
+.order-stepbar[data-checkout-open] .order-step:nth-child(4) {
+  color: #202020;
+}
+
+.order-stepbar[data-checkout-open] .order-step:nth-child(4) .step-circle {
+  border-color: #262626;
+  background: #262626;
+  color: #fff;
+}
+
+/* ─── 반응형 ─── */
+@media (max-width: 1100px) {
+  .order-stepbar {
+    gap: 8px;
+    padding-inline: 16px;
+  }
+
+  .order-step {
+    font-size: 0.8rem;
+    gap: 5px;
+  }
+
+  .order-step:not(:last-child)::after {
+    min-width: 6px;
+  }
+
+  .step-circle {
+    width: 29px;
+    height: 29px;
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .order-stepbar {
+    height: 64px;
+    gap: 2px;
+    padding-inline: 8px;
+  }
+
+  .order-step {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    font-size: 0.54rem;
+    text-align: center;
+    line-height: 1.1;
+    white-space: normal;
+  }
+
+  .order-step:not(:last-child)::after {
+    display: none;
+  }
+
+  .step-circle {
+    width: 27px;
+    height: 27px;
+    font-size: 0.75rem;
+  }
+
+  .step-circle .icon {
+    width: 16px;
+    height: 16px;
+  }
+}

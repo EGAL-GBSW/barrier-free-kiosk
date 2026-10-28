@@ -1,0 +1,149 @@
+/* ─── KioskHeader ────────────────────────────────────────────────
+ *  레퍼런스 ./frontend/kiosk.css 기준
+ *  grid 3열: [홈 버튼/워드마크(1fr)] [경과 시간(auto)] [언어 선택(1fr)]
+ * ──────────────────────────────────────────────────────────────── */
+
+.kiosk-header {
+  height: var(--header-bar, 66px);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 0 28px;
+  background: #f7fbff;
+  border-bottom: 1px solid #dce7ef;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  isolation: auto;
+  overflow: visible;
+}
+
+/* ── 좌: 홈 버튼 ── */
+.header-home {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 8px 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: #284b70;
+  font-size: 1.05rem;
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.header-home:hover {
+  color: var(--brand, #184bc1);
+  background: none;
+}
+
+.header-home .icon {
+  width: 26px;
+  height: 26px;
+  stroke-width: 1.8;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* 좌: 워드마크 (showHome=false 시) */
+.wordmark {
+  justify-self: start;
+  font: 900 38px/1 'Arial Black', Arial, sans-serif;
+  letter-spacing: -3px;
+  color: var(--brand, #184bc1);
+  user-select: none;
+}
+
+.brand-dot {
+  color: rgba(24, 75, 193, 0.45);
+}
+
+/* ── 중: 경과 시간 ── */
+.order-elapsed {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #53677b;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* ── 우: 언어 버튼 ── */
+.language-options {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+}
+
+.language-option {
+  min-width: 92px;
+  min-height: 44px;
+  padding: 8px 19px;
+  border-radius: 8px;
+  background: #383838;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.language-option:hover {
+  background: #505050;
+}
+
+.language-option[aria-pressed="true"] {
+  background: #383838;
+  color: #fff;
+}
+
+/* ─── 반응형 ─── */
+@media (max-width: 1100px) {
+  .kiosk-header {
+    padding: 0 16px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 760px) {
+  .kiosk-header {
+    height: 60px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .header-home {
+    font-size: 0.8rem;
+    gap: 3px;
+    min-height: 38px;
+  }
+
+  .header-home .icon {
+    width: 21px;
+    height: 21px;
+  }
+
+  .order-elapsed {
+    font-size: 0.85rem;
+  }
+
+  .language-option {
+    min-width: 67px;
+    min-height: 38px;
+    padding: 7px 10px;
+    font-size: 0.8rem;
+  }
+
+  .wordmark {
+    font-size: 28px;
+    letter-spacing: -2px;
+  }
+}
