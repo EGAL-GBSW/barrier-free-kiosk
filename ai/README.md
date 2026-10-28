@@ -2,6 +2,8 @@
 
 현재 AI 코드는 로컬 음성 파일을 한국어 텍스트로 변환하는 기존 `stt.py`, 별도 AI 서버의 HTTP 음성 업로드 API, 그리고 A4000에서 `medium`과 `large-v3`를 비교하는 도구로 구성됩니다. STT 뒤의 메뉴 검색·SLM 주문 후보 생성과 Backend 주문 확정은 아직 연결되지 않았습니다.
 
+로컬 SLM을 연결한 텍스트 메뉴 대화는 [A4000 Windows 실행 안내](TEXT_DIALOGUE_WINDOWS.md)를 참고하세요. `text_dialogue.py`는 Ollama의 Qwen3 4B Instruct로 조건과 설명 기반 추천을 추출하고, 메뉴 검증·질문·테스트 장바구니까지 실행합니다. STT/TTS와 실제 주문 API 연결은 후속 단계입니다.
+
 ## 설치
 
 AI 서버에서 Python 가상환경을 만든 뒤 의존성을 설치합니다.
@@ -22,6 +24,8 @@ python check_environment.py
 이 명령은 Python·패키지 버전과 `nvidia-smi`가 제공하는 GPU·드라이버·VRAM 정보를 출력합니다. cuDNN 버전과 실제 CUDA 추론 가능 여부는 A4000 서버에서 별도로 확인해야 합니다.
 
 ## HTTP STT API
+
+대화로 메뉴를 좁히고 옵션을 선택하는 설계 초안·메뉴 JSON·조건 추출 정답 40개는 [dialogue_design/README.md](dialogue_design/README.md)에 있습니다. 현재 STT API와는 아직 연결되지 않았습니다.
 
 기본값은 A4000을 위한 `medium`, `cuda`, `float16`입니다. 모델은 첫 요청 때 로드되며, 한 프로세스에서 요청을 순서대로 처리해 GPU 메모리 급증을 피합니다.
 
