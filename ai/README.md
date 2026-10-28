@@ -23,6 +23,8 @@ python check_environment.py
 
 ## HTTP STT API
 
+대화로 메뉴를 좁히고 옵션을 선택하는 설계 초안·메뉴 JSON·조건 추출 정답 40개는 [dialogue_design/README.md](dialogue_design/README.md)에 있습니다. 현재 STT API와는 아직 연결되지 않았습니다.
+
 기본값은 A4000을 위한 `medium`, `cuda`, `float16`입니다. 모델은 첫 요청 때 로드되며, 한 프로세스에서 요청을 순서대로 처리해 GPU 메모리 급증을 피합니다.
 
 ```bash
