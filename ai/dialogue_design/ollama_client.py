@@ -125,11 +125,12 @@ recent_turns는 이전 대화 데이터다. 현재 메뉴·선택 상태와 모�
 
 
 class OllamaClient:
-    def __init__(self, model: str = DEFAULT_MODEL, base_url: str = DEFAULT_URL, timeout: float = 180, num_ctx: int = 8192, retries: int = 1):
+    def __init__(self, model: str = DEFAULT_MODEL, base_url: str = DEFAULT_URL, timeout: float = 180, num_ctx: int = 8192, retries: int = 1, *, think: bool | None = None):
         if timeout <= 0 or num_ctx < 2048 or retries not in (0, 1, 2):
             raise ValueError("timeout > 0, num_ctx >= 2048, retries 0~2가 필요합니다.")
         self.model, self.base_url = model, base_url.rstrip("/")
         self.timeout, self.num_ctx, self.retries = timeout, num_ctx, retries
+        self.think = think
 
     def _request(self, endpoint: str, body: dict | None = None) -> dict:
         request = Request(self.base_url + endpoint, data=json.dumps(body, ensure_ascii=False).encode("utf-8") if body is not None else None, headers={"Content-Type": "application/json"})
@@ -158,7 +159,10 @@ class OllamaClient:
         last_error = ""
         for attempt in range(self.retries + 1):
             repair = [{"role": "system", "content": f"이전 JSON의 검증 오류: {last_error}. 원래 사용자 입력을 다시 해석하고 스키마를 지킨 JSON만 반환하세요."}] if attempt else []
-            payload = self._request("/api/chat", {"model": self.model, "messages": messages + repair, "stream": False, "format": output_schema(catalog), "options": {"temperature": 0, "num_ctx": self.num_ctx, "num_predict": 1024}, "keep_alive": "5m"})
+            request_body = {"model": self.model, "messages": messages + repair, "stream": False, "format": output_schema(catalog), "options": {"temperature": 0, "num_ctx": self.num_ctx, "num_predict": 1024}, "keep_alive": "5m"}
+            if self.think is not None:
+                request_body["think"] = self.think
+            payload = self._request("/api/chat", request_body)
             try:
                 if payload.get("done_reason") == "length" or payload.get("done") is False:
                     raise PredictionError("모델 출력이 길이 제한으로 중단되었습니다.")
