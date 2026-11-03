@@ -21,6 +21,18 @@ python check_environment.py
 
 이 명령은 Python·패키지 버전과 `nvidia-smi`가 제공하는 GPU·드라이버·VRAM 정보를 출력합니다. cuDNN 버전과 실제 CUDA 추론 가능 여부는 A4000 서버에서 별도로 확인해야 합니다.
 
+### 음성 읽기 중 `metadata_errors` 오류가 발생할 때
+
+`TypeError: open() got an unexpected keyword argument 'metadata_errors'`는 `faster-whisper 1.2.1`과 PyAV 19의 호환성 문제입니다. `requirements.txt`는 실제 디코딩을 검증한 `av==18.1.0`으로 고정합니다. Windows에서는 `ai` 폴더의 PowerShell에서 다음 명령을 실행합니다.
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe check_environment.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p test_audio_decoding.py -v
+```
+
+기존 체크아웃을 즉시 복구하려면 `.\.venv\Scripts\python.exe -m pip install "av==18.1.0"`을 실행해도 됩니다. 이 변경은 모델 다운로드나 CUDA 설정과 별개인 음성 디코더의 버전을 맞춥니다. 수정 후 비교를 다시 실행할 때는 `--output-dir benchmark_results/smoke_fixed`처럼 새 결과 폴더를 지정하세요.
+
 ## HTTP STT API
 
 기본값은 A4000을 위한 `medium`, `cuda`, `float16`입니다. 모델은 첫 요청 때 로드되며, 한 프로세스에서 요청을 순서대로 처리해 GPU 메모리 급증을 피합니다.
