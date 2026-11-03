@@ -1,0 +1,161 @@
+/* ─── OrderModeModal ─────────────────────────────────────────────
+ *  레퍼런스 ./frontend/kiosk.css (.order-mode-modal) 기준
+ * ──────────────────────────────────────────────────────────────── */
+
+.order-mode-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(30, 41, 59, 0.45);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.order-mode-modal {
+    width: 620px;
+    max-width: calc(100vw - 32px);
+    border: 0;
+    border-radius: 20px;
+    background: #fff;
+    color: #233c57;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.16);
+    position: relative;
+    overflow: hidden;
+}
+
+.order-mode-prompt {
+    position: relative;
+    padding: 44px 32px 34px;
+    text-align: center;
+}
+
+.mode-prompt-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 0;
+    background: #f0f4f8;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.mode-prompt-close:hover {
+    background: #e2eaf1;
+}
+
+.mode-prompt-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: #eaf2ff;
+    color: #184bc1;
+}
+
+.mode-prompt-icon svg {
+    width: 38px;
+    height: 38px;
+}
+
+.order-mode-prompt h2 {
+    font-size: 1.7rem;
+    line-height: 1.4;
+    margin: 0 0 10px;
+    color: #233c57;
+    font-weight: 800;
+    word-break: keep-all;
+}
+
+.order-mode-prompt p {
+    color: #637b93;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin: 0 0 28px;
+    word-break: keep-all;
+}
+
+.mode-prompt-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.mode-btn {
+    min-height: 104px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    font-weight: 700;
+    gap: 12px;
+    border-radius: 12px;
+    padding: 16px 12px;
+    cursor: pointer;
+    border: 0;
+    transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.mode-btn svg {
+    width: 30px;
+    height: 30px;
+}
+
+.voice-choice {
+    background: #184bc1;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(24, 75, 193, 0.25);
+}
+
+.voice-choice:hover {
+    background: #113aa0;
+    transform: translateY(-2px);
+}
+
+.touch-choice {
+    background: #f1f6fa;
+    color: #233c57;
+    border: 1px solid #c9d9e6;
+}
+
+.touch-choice:hover {
+    background: #e4eef6;
+    border-color: #184bc1;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+    .order-mode-prompt {
+        padding: 36px 20px 24px;
+    }
+    .order-mode-prompt h2 {
+        font-size: 1.35rem;
+    }
+    .order-mode-prompt p {
+        font-size: 0.92rem;
+    }
+    .mode-prompt-actions {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .mode-btn {
+        min-height: 64px;
+        flex-direction: row;
+        font-size: 1rem;
+        gap: 10px;
+    }
+}

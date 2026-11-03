@@ -1,0 +1,111 @@
+/* ─── VoiceConfirm ───────────────────────────────────────────────
+ *  레퍼런스 ./frontend/style.css 및 ./frontend/app.js 기준
+ * ──────────────────────────────────────────────────────────────── */
+
+.voice-confirm {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px 20px;
+    border: 1px solid #c9d9e6;
+    border-radius: 12px;
+    background: #f8fbfe;
+    margin-left: 46px;
+    box-shadow: 0 4px 12px rgba(24, 75, 193, 0.06);
+}
+
+.voice-confirm .product-photo {
+    width: 72px;
+    height: 72px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background-image: url("/menu-collection.png");
+    background-size: 300% 300%;
+    background-repeat: no-repeat;
+    mix-blend-mode: multiply;
+}
+
+.voice-confirm-info {
+    flex: 1;
+    min-width: 140px;
+}
+
+.voice-confirm-info h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #233c57;
+    margin: 0 0 4px;
+}
+
+.voice-confirm-info p {
+    font-size: 0.86rem;
+    color: #627b94;
+    margin: 0 0 6px;
+}
+
+.voice-confirm-info strong {
+    font-size: 1.15rem;
+    font-weight: 750;
+    color: #184bc1;
+}
+
+.voice-confirm-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.voice-confirm-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 0;
+    background: var(--brand, #184bc1);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.voice-confirm-btn:hover {
+    background: #113aa0;
+}
+
+.voice-confirm-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.voice-retry-btn {
+    background: transparent;
+    border: 0;
+    color: #647b92;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 10px;
+}
+
+.voice-retry-btn:hover {
+    color: #233c57;
+    text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+    .voice-confirm {
+        margin-left: 0;
+        gap: 12px;
+    }
+    .voice-confirm-actions {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 8px;
+    }
+}

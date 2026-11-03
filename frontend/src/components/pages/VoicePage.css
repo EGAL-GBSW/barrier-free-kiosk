@@ -1,0 +1,223 @@
+/* ─── VoicePage v2 ────────────────────────────────────────────────
+ *  메뉴 카탈로그 + 오른쪽 하단 반원형 FAB + 간략 안내 말풍선
+ * ──────────────────────────────────────────────────────────────── */
+
+.voice-page-v2 {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    box-sizing: border-box;
+}
+
+/* 메뉴 카탈로그 영역 */
+.voice-catalogue {
+    padding: 16px 24px 12px;
+    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 100%;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* ─── 오른쪽 하단 반원형 FAB (크게) ─── */
+.voice-fab {
+    position: fixed;
+    bottom: 150px;
+    right: 0;
+    z-index: 100;
+
+    /* 기본 반원: 크게 */
+    width: 88px;
+    height: 88px;
+    border-radius: 50% 0 0 50%;
+    border: none;
+    background: var(--brand, #184bc1);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: -3px 3px 16px rgba(24, 75, 193, 0.35);
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 18px;
+    gap: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                background 0.2s,
+                box-shadow 0.2s,
+                border-radius 0.35s,
+                padding 0.35s;
+}
+
+.voice-fab-icon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    transition: width 0.35s, height 0.35s;
+}
+
+.voice-fab-label {
+    font-size: 1rem;
+    font-weight: 700;
+    white-space: nowrap;
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    transition: opacity 0.25s, max-width 0.35s;
+}
+
+/* 호버: 어두워지고 전체적으로 확장 */
+.voice-fab:hover {
+    background: #113aa0;
+    width: 220px;
+    height: 96px;
+    padding-left: 24px;
+    box-shadow: -4px 4px 24px rgba(24, 75, 193, 0.5);
+}
+
+.voice-fab:hover .voice-fab-icon {
+    width: 40px;
+    height: 40px;
+}
+
+.voice-fab:hover .voice-fab-label {
+    opacity: 1;
+    max-width: 140px;
+}
+
+/* 확장 상태 (말풍선 열렸을 때) */
+.voice-fab.expanded {
+    width: 220px;
+    height: 96px;
+    padding-left: 24px;
+    border-radius: 48px 0 0 48px;
+}
+
+.voice-fab.expanded .voice-fab-icon {
+    width: 40px;
+    height: 40px;
+}
+
+.voice-fab.expanded .voice-fab-label {
+    opacity: 1;
+    max-width: 140px;
+}
+
+/* 듣고 있는 상태 */
+.voice-fab.listening {
+    background: #d32f2f;
+    box-shadow: -3px 3px 16px rgba(211, 47, 47, 0.4);
+    animation: fab-pulse 1.3s infinite;
+}
+
+.voice-fab.listening:hover {
+    background: #b71c1c;
+}
+
+@keyframes fab-pulse {
+    0% {
+        box-shadow: -3px 3px 10px rgba(211, 47, 47, 0.4);
+    }
+    50% {
+        box-shadow: -3px 3px 30px rgba(211, 47, 47, 0.6);
+    }
+    100% {
+        box-shadow: -3px 3px 10px rgba(211, 47, 47, 0.4);
+    }
+}
+
+/* ─── 간략 안내 말풍선 ─── */
+.voice-tooltip {
+    position: fixed;
+    bottom: 260px;
+    right: 20px;
+    z-index: 101;
+    max-width: 280px;
+    background: #fff;
+    border: 1px solid #dce7ef;
+    border-radius: 14px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    padding: 16px 20px;
+    animation: tooltip-in 0.25s ease-out;
+}
+
+@keyframes tooltip-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.voice-tooltip-text {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.6;
+    color: #233c57;
+    white-space: pre-line;
+}
+
+/* 꼬리 (말풍선 화살표 — 오른쪽 하단) */
+.voice-tooltip-tail {
+    position: absolute;
+    bottom: -9px;
+    right: 32px;
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 9px solid #fff;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.06));
+}
+
+/* ─── 반응형 ─── */
+@media (max-width: 760px) {
+    .voice-catalogue {
+        padding: 12px 12px 8px;
+    }
+
+    .voice-fab {
+        width: 72px;
+        height: 72px;
+        bottom: 140px;
+        padding-left: 14px;
+    }
+
+    .voice-fab-icon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .voice-fab:hover,
+    .voice-fab.expanded {
+        width: 180px;
+        height: 80px;
+    }
+
+    .voice-fab:hover .voice-fab-icon,
+    .voice-fab.expanded .voice-fab-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .voice-tooltip {
+        bottom: 224px;
+        right: 14px;
+        max-width: 240px;
+        padding: 12px 16px;
+    }
+
+    .voice-tooltip-text {
+        font-size: 0.88rem;
+    }
+}
