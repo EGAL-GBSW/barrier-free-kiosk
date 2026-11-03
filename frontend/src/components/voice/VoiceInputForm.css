@@ -1,0 +1,92 @@
+/* ─── VoiceInputForm ─────────────────────────────────────────────
+ *  레퍼런스 ./frontend/style.css 및 ./frontend/app.js 기준
+ * ──────────────────────────────────────────────────────────────── */
+
+.voice-chips {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.voice-chip {
+    background: #fff;
+    color: #4a637d;
+    border: 1px solid #c9d9e6;
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.voice-chip:hover {
+    background: #e7f2ff;
+    border-color: #184bc1;
+    color: #184bc1;
+}
+
+.voice-input {
+    display: flex;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    border: 1px solid #c9d9e6;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+    padding: 4px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.voice-input:focus-within {
+    border-color: #184bc1;
+    box-shadow: 0 0 0 1px #184bc1;
+}
+
+.voice-input input {
+    border: 0;
+    background: none;
+    color: #233c57;
+    min-width: 0;
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.voice-input input::placeholder {
+    color: #9cb1c4;
+}
+
+.voice-input button {
+    border-radius: 8px;
+    border: 0;
+    background: var(--brand, #184bc1);
+    color: #fff;
+    width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.voice-input button:hover {
+    background: #113aa0;
+}
+
+.voice-input button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.voice-privacy {
+    font-size: 0.74rem;
+    color: #7b8e9f;
+    margin-top: 12px;
+    text-align: center;
+}

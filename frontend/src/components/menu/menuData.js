@@ -164,3 +164,82 @@ export function optionsText(line) {
               .filter(Boolean)
               .join(" · ")
 }
+
+const counts = {
+    한: 1, 하나: 1, 두: 2, 둘: 2, 세: 3, 셋: 3, 네: 4, 넷: 4, 다섯: 5, 여섯: 6, 일곱: 7, 여덟: 8, 아홉: 9,
+    열: 10, 스물: 20, 서른: 30, 마흔: 40, 쉰: 50, 예순: 60, 일흔: 70, 여든: 80, 아흔: 90
+}
+const ones = Object.entries(counts).filter(([, value]) => value < 10)
+for (const [prefix, value] of Object.entries(counts).filter(([, value]) => value >= 10)) {
+    for (const [suffix, unit] of ones) counts[prefix + suffix] = value + unit
+}
+counts.스무 = 20
+const countPattern = `(?:\\d+|${Object.keys(counts).sort((a, b) => b.length - a.length).join("|")})`
+const readCount = (value) => counts[value] ?? Number(value)
+
+/**
+ * parseOrder
+ * 음성 인식 또는 텍스트 입력된 한국어 자연어 문장에서 메뉴, 수량, 옵션을 분석합니다.
+ * @param {string} text 사용자 음성 텍스트
+ * @returns {{ menu?: object, options?: object, error?: string }}
+ */
+export function parseOrder(text) {
+    const compact = text.replace(/\s/g, "").toLowerCase()
+    const found = MENUS.filter((m) =>
+        m.aliases.some((a) => compact.includes(a.replace(/\s/g, "")))
+    )
+    if (found.length !== 1) {
+        return {
+            error: found.length
+                ? "한 번에 메뉴 하나씩 말씀해 주세요."
+                : "메뉴를 찾지 못했어요. 메뉴 이름을 다시 말씀해 주세요.",
+        }
+    }
+    const menu = found[0]
+    const options = defaults(menu)
+
+    const shot = compact.match(
+        new RegExp(`(?:샷(?:을)?(${countPattern})?(?:개)?|(${countPattern})샷)(?:을)?추가`)
+    )
+    if (shot) {
+        if (menu.category !== "coffee") {
+            return { error: "샷 추가는 커피 메뉴에서 선택할 수 있어요." }
+        }
+        options.shots = shot[1] || shot[2] ? readCount(shot[1] || shot[2]) : 1
+        if (options.shots < 1 || options.shots > 2) {
+            return { error: "샷은 1개 또는 2개 추가할 수 있어요." }
+        }
+    } else if (/샷.*추가/.test(compact)) {
+        return { error: "추가할 샷 수를 1개 또는 2개로 말씀해 주세요." }
+    }
+
+    const quantityText = shot ? compact.replace(shot[0], "") : compact
+    if (/-\d+(?:잔|개)|\d+\.\d+(?:잔|개)/.test(quantityText)) {
+        return { error: "수량은 1개부터 99개까지 정수로 말씀해 주세요." }
+    }
+    const quantities = [...quantityText.matchAll(new RegExp(`(${countPattern})(?:잔|개)`, "g"))]
+    if (quantities.length > 1) {
+        return { error: "한 번에 메뉴 하나씩 말씀해 주세요." }
+    }
+    if (quantities.length) {
+        options.quantity = readCount(quantities[0][1])
+    }
+    if (options.quantity < 1 || options.quantity > 99) {
+        return { error: "수량은 1개부터 99개까지 주문할 수 있어요." }
+    }
+
+    if (/따뜻|뜨거|핫|hot/.test(compact) && /아이스|차갑|ice|아아/.test(compact)) {
+        return { error: "온도는 시원하게 또는 따뜻하게 중 하나만 말씀해 주세요." }
+    }
+    if (/따뜻|뜨거|핫|hot/.test(compact)) {
+        if (!menu.temps.includes("HOT")) {
+            return { error: `${menu.name}는 따뜻한 옵션이 없어요. 다른 옵션을 선택해 주세요.` }
+        }
+        options.temperature = "HOT"
+    }
+    if (/라지|크게|large/.test(compact) && menu.category !== "bakery") {
+        options.size = "Large"
+    }
+
+    return { menu, options }
+}

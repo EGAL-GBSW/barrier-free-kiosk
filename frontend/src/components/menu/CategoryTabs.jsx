@@ -24,6 +24,7 @@ function CategoryTabs({
 
     return (
         <nav className="category-tabs" aria-label="메뉴 카테고리">
+            {/* ── 카테고리 탭 리스트 ── */}
             <div className="category-tab-list">
                 {categories.map((c) => {
                     const isActive = activeCategory === c.id
@@ -45,6 +46,7 @@ function CategoryTabs({
                 })}
             </div>
 
+            {/* ── 글자 크기 조절 컨트롤 ── */}
             <div className="kiosk-tools">
                 <div
                     className="font-control"
