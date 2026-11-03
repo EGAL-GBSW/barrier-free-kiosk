@@ -1,25 +1,30 @@
-const express = require("express");
-const cors = require("cors");
-const menuRoutes = require("./routes/menu.routes");
-const orderRoutes = require("./routes/order.routes");
+const path = require('node:path');
+require('dotenv').config({ path: path.join(__dirname, '../.env'), quiet: true });
+const express = require('express');
+const cors = require('cors');
+const menuRoutes = require('./routes/menus');
+const orderRoutes = require('./routes/orders');
+const { createOrderService } = require('./services/order-service');
+const { HttpError, errorHandler } = require('./middlewares/error-handler');
 
-const app = express();
+function createApp() {
+  const app = express();
+  app.disable('x-powered-by');
+  app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }));
+  app.use(express.json({ limit: '32kb' }));
+  app.get('/health', (req, res) => res.json({ status: 'OK', message: 'Barrier Free Kiosk API Server' }));
+  app.use('/menus', menuRoutes);
+  app.use('/orders', orderRoutes(createOrderService()));
+  app.use((req, res, next) => next(new HttpError(404, 'NOT_FOUND', '요청한 경로가 없습니다.')));
+  app.use(errorHandler);
+  return app;
+}
 
-app.use(cors());
-app.use(express.json());
+if (require.main === module) {
+  const port = Number(process.env.PORT || 3000);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT는 1~65535 사이의 정수여야 합니다.');
+  const host = process.env.HOST || '127.0.0.1';
+  createApp().listen(port, host, () => console.log(`Server running on http://${host}:${port}`));
+}
 
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "OK",
-    message: "Barrier Free Kiosk API Server"
-  });
-});
-
-app.use("/menus", menuRoutes);
-app.use("/orders", orderRoutes);
-
-const PORT = 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+module.exports = { createApp };
