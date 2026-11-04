@@ -46,7 +46,7 @@ export function useVoiceOrder({
             const parsed = parseOrder(text)
 
             // 메뉴 페이지에서 바로 음성 인식한 경우
-            if (currentPage === "menu") {
+            if (currentPage === "menu" || currentPage === "voice") {
                 setPending(null)
                 if (parsed.error) {
                     setSpeechStatus(parsed.error)
@@ -96,7 +96,7 @@ export function useVoiceOrder({
 
         if (!SpeechRecognition) {
             setSpeechStatus(
-                "이 브라우저는 음성 인식을 지원하지 않아요. Chrome에서 열거나 아래 입력창에 입력해 주세요."
+                "이 브라우저는 음성 인식을 지원하지 않아요. Chrome에서 열거나 메뉴를 눌러 주문해 주세요."
             )
             return
         }
@@ -121,7 +121,7 @@ export function useVoiceOrder({
                 recognitionRef.current = null
                 if (e.error === "not-allowed") {
                     setSpeechStatus(
-                        "마이크 권한이 필요해요. 브라우저에서 허용하거나 직접 입력해 주세요."
+                        "마이크 권한이 필요해요. 브라우저에서 허용하거나 메뉴를 눌러 주문해 주세요."
                     )
                 } else if (e.error === "no-speech") {
                     setSpeechStatus(
@@ -129,7 +129,7 @@ export function useVoiceOrder({
                     )
                 } else {
                     setSpeechStatus(
-                        "음성을 인식하지 못했어요. 연결을 확인하거나 직접 입력해 주세요."
+                        "음성을 인식하지 못했어요. 연결을 확인하거나 메뉴를 눌러 주문해 주세요."
                     )
                 }
             }

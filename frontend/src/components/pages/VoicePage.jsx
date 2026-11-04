@@ -1,4 +1,3 @@
-import { useState } from "react"
 import "./VoicePage.css"
 import ProductGrid from "../menu/ProductGrid"
 import MenuPagination from "../menu/MenuPagination"
@@ -32,26 +31,6 @@ function VoicePage({
     speechStatus = "",
     onToggleListen,
 }) {
-    const [bubbleOpen, setBubbleOpen] = useState(false)
-
-    const handleFabClick = () => {
-        if (!bubbleOpen) {
-            setBubbleOpen(true)
-            if (!listening) {
-                onToggleListen?.()
-            }
-        } else {
-            onToggleListen?.()
-        }
-    }
-
-    // 말풍선 안내 텍스트 결정
-    const getBubbleText = () => {
-        if (speechStatus) return speechStatus
-        if (listening) return "듣고 있어요. 주문을 말씀해 주세요."
-        return "안녕하세요! 어떤 메뉴를 드릴까요?\n\"아이스 아메리카노 두 잔 주세요\"처럼\n말씀해 주세요."
-    }
-
     return (
         <section className="voice-page-v2" aria-label="음성 주문 화면">
             {/* 메뉴 카탈로그 (터치 메뉴와 동일) */}
@@ -70,21 +49,16 @@ function VoicePage({
                 />
             </div>
 
-            {/* 간략한 안내 말풍선 (FAB 위에 표시) */}
-            {bubbleOpen && (
-                <div className="voice-tooltip" role="status" aria-live="polite">
-                    <p className="voice-tooltip-text">
-                        {getBubbleText()}
-                    </p>
-                    <div className="voice-tooltip-tail" />
-                </div>
-            )}
+            <p className="voice-inline-status" role="status" aria-live="polite">
+                {speechStatus}
+            </p>
 
             {/* 음성 주문 FAB (오른쪽 하단 반원) */}
             <button
                 type="button"
-                className={`voice-fab${listening ? " listening" : ""}${bubbleOpen ? " expanded" : ""}`}
-                onClick={handleFabClick}
+                className={`voice-fab${listening ? " listening expanded" : ""}`}
+                onClick={onToggleListen}
+                aria-pressed={listening}
                 aria-label={listening ? "음성 인식 중지" : "음성 주문 시작"}
             >
                 <svg

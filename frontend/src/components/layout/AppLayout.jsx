@@ -9,7 +9,6 @@ import CategoryTabs from "../menu/CategoryTabs"
 import ProductGrid from "../menu/ProductGrid"
 import MenuPagination from "../menu/MenuPagination"
 import ProductModal from "../menu/ProductModal"
-import OrderModeModal from "../order/OrderModeModal"
 import VoicePage from "../pages/VoicePage"
 import PaymentPage from "../pages/PaymentPage"
 import CompletePage from "../pages/CompletePage"
@@ -82,7 +81,6 @@ function AppLayout({
     children,
 }) {
     // 모드 및 페이지 상태 관리
-    const [internalMode, setInternalMode] = useState("touch")
     const [pageOverride, setPageOverride] = useState(null)
     const [prevPropPage, setPrevPropPage] = useState(page)
     const [showOrderModeModal, setShowOrderModeModal] = useState(false)
@@ -325,7 +323,6 @@ function AppLayout({
     const handleHomeNavigation = () => {
         voiceOrder.stopListening()
         setInternalPage("start")
-        setInternalMode("touch")
         onHome?.("start")
     }
 
@@ -422,14 +419,14 @@ function AppLayout({
 
     // 기본 메인 패널 (터치 카탈로그 또는 VoicePage 음성 주문 화면 렌더링)
     const renderDefaultMainPanel = () => {
-        if (activePage === "voice") {
+        if (activePage === "menu" || activePage === "voice") {
             return (
                 <VoicePage
                     products={visibleProducts}
                     pageSize={pageSize}
                     currentPage={safePage + 1}
                     totalPages={totalPages}
-                    onSelectProduct={(p) => setSelectedProduct(p)}
+                    onSelectProduct={(p) => { voiceOrder.stopListening(); setSelectedProduct(p) }}
                     onPageChange={(p) => handlePageChange(p - 1)}
                     listening={voiceOrder.listening}
                     speechStatus={voiceOrder.speechStatus}
@@ -686,13 +683,6 @@ function AppLayout({
                     )}
                 </>
             )}
-
-            {/* ── 주문 방식(음성/터치) 선택 모달 ── */}
-            <OrderModeModal
-                isOpen={showOrderModeModal}
-                onClose={() => setShowOrderModeModal(false)}
-                onSelect={handleOrderModeSelect}
-            />
 
             {/* ── 상품 옵션 선택 모달 ── */}
             <ProductModal
