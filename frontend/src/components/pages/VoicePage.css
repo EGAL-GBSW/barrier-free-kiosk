@@ -10,6 +10,19 @@
     box-sizing: border-box;
 }
 
+.voice-inline-status {
+    margin: 0;
+    padding: 0 24px 12px;
+    color: #233c57;
+    font-size: 1rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.voice-inline-status:empty {
+    display: none;
+}
+
 /* 메뉴 카탈로그 영역 */
 .voice-catalogue {
     padding: 16px 24px 12px;
