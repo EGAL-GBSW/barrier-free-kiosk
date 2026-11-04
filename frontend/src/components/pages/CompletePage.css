@@ -1,0 +1,211 @@
+/* ─── CompletePage (결제 완료) ───────────────────────────────────
+ *  레퍼런스 ./frontend/style.css (.complete-*, .receipt*) +
+ *  kiosk.css "Server-approved test payment completion." 최종 적용값 기준
+ *  (.complete-page 기본 레이아웃은 AppLayout.css)
+ * ──────────────────────────────────────────────────────────────── */
+
+.complete-page {
+    color: #263e59;
+}
+
+.complete-copy {
+    width: min(52%, 580px);
+}
+
+.complete-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    margin-bottom: 20px;
+    border-radius: 50%;
+    background: #e5efff;
+    color: #184bc1;
+}
+
+.complete-check svg.icon {
+    width: 42px;
+    height: 42px;
+}
+
+.complete-copy h1 {
+    font-size: 2.4rem;
+    line-height: 1.35;
+    letter-spacing: -2px;
+    color: #263e59;
+    margin: 22px 0 16px;
+}
+
+.complete-copy > p {
+    font-size: 1.15rem;
+    color: #5b728a;
+}
+
+.complete-order-number {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 22px 0;
+    color: #315475;
+}
+
+.complete-order-number > span {
+    font-size: 1.2rem;
+}
+
+.complete-order-number > strong {
+    font-size: 3.7rem;
+    line-height: 1.1;
+    color: #184bc1;
+}
+
+.complete-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 25px 0 24px;
+    font-size: 1rem;
+    color: #3c5875;
+}
+
+.complete-meta svg.icon {
+    width: 23px;
+    height: 23px;
+}
+
+.complete-meta > span {
+    display: block;
+    flex-basis: 100%;
+    margin-top: 10px;
+    font-size: 0.86rem;
+    line-height: 1.6;
+    color: #6a7d90;
+}
+
+.complete-copy .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 68px;
+    padding: 16px 28px;
+    border-radius: 10px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.complete-copy .primary {
+    background: #184bc1;
+    color: #fff;
+}
+
+.complete-copy .primary:hover {
+    background: #123b9b;
+}
+
+.complete-copy .button svg.icon {
+    width: 23px;
+    height: 23px;
+}
+
+/* ── 영수증 ── */
+.receipt {
+    position: relative;
+    flex-shrink: 0;
+    width: 390px;
+    max-height: 100%;
+    overflow: auto;
+    padding: 28px;
+    border: 1px solid #cfdeeb;
+    background: #fff;
+    color: #263e59;
+    transform: rotate(2deg);
+}
+
+.receipt-brand {
+    font: 900 40px/1 "Arial Black", Arial, sans-serif;
+    letter-spacing: -4px;
+    text-align: center;
+    color: #184bc1;
+}
+
+.receipt > p {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #828282;
+}
+
+.receipt-items {
+    max-height: 230px;
+    overflow: auto;
+    padding: 15px 0;
+}
+
+.receipt-items > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 8px 0;
+    font-size: 12px;
+}
+
+.receipt-items small {
+    display: block;
+    margin-top: 5px;
+    font-size: 10px;
+    color: #909090;
+}
+
+.receipt-items strong {
+    white-space: nowrap;
+}
+
+.receipt-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 0;
+    border-top: 1px dashed #c9c9c9;
+    font-size: 0.85rem;
+}
+
+.receipt-total strong {
+    font-size: 1.35rem;
+    color: #184bc1;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 900px) {
+    .complete-page {
+        gap: 28px;
+        padding: 24px;
+    }
+    .complete-copy h1 {
+        font-size: 1.7rem;
+    }
+    .complete-copy > p {
+        font-size: 1rem;
+    }
+    .receipt {
+        width: 340px;
+    }
+}
+
+@media (max-width: 760px) {
+    .complete-copy {
+        width: 100%;
+        text-align: center;
+    }
+    .complete-order-number,
+    .complete-meta {
+        justify-content: center;
+    }
+    .receipt {
+        width: min(100%, 420px);
+        max-height: none;
+    }
+}

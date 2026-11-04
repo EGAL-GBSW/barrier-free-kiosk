@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import "./AppLayout.css"
 import KioskHeader from "./KioskHeader"
 import StepBar from "./StepBar"
@@ -12,6 +12,7 @@ import ProductModal from "../menu/ProductModal"
 import OrderModeModal from "../order/OrderModeModal"
 import VoicePage from "../pages/VoicePage"
 import PaymentPage from "../pages/PaymentPage"
+import CompletePage from "../pages/CompletePage"
 import { useVoiceOrder } from "../voice/useVoiceOrder"
 import {
     MENUS,
@@ -95,6 +96,8 @@ function AppLayout({
     const [editingIndex, setEditingIndex] = useState(null)
     const [showClearConfirm, setShowClearConfirm] = useState(false)
     const [checkoutReturnPage, setCheckoutReturnPage] = useState("menu")
+    const [receipt, setReceipt] = useState(null)
+    const receiptSequence = useRef(0)
     const [internalToast, setInternalToast] = useState({
         message: "",
         visible: false,
@@ -274,8 +277,31 @@ function AppLayout({
     }
 
     const handleCheckout = (widgets) => {
-        if (onCheckout) onCheckout({ cart, orderType, widgets })
-        else showToast("결제 승인은 아직 연결되지 않았어요.")
+        if (onCheckout) {
+            onCheckout({ cart, orderType, widgets })
+            return
+        }
+        // TODO: 백엔드 결제 승인(/payments/confirm) 연동 전까지 임시로 바로 결제 완료 처리
+        receiptSequence.current += 1
+        setReceipt({
+            number: String(receiptSequence.current).padStart(3, "0"),
+            cart: cart.map((line) => ({ ...line })),
+            total: total(cart),
+            type: orderType,
+            method: "테스트 결제",
+            approved: false,
+        })
+        setInternalPage("complete")
+    }
+
+    // 결제 완료 후 "새로운 주문 시작하기": 주문 상태 초기화 후 시작 화면으로
+    const handleNewOrder = () => {
+        setCart([])
+        setReceipt(null)
+        setOrderType("DINE_IN")
+        setActiveCategory("all")
+        setMenuPage(0)
+        handleHomeNavigation()
     }
 
     // 시작 화면 매장/포장 클릭 시 모드 선택 모달 표시
@@ -623,7 +649,9 @@ function AppLayout({
             {!isStart && activePage !== "payment" && (
                 <>
                     <KioskHeader
-                        onHome={handleHomeNavigation}
+                        onHome={
+                            isComplete ? handleNewOrder : handleHomeNavigation
+                        }
                         elapsed={activeElapsed}
                         showHome={true}
                         language="한국어"
@@ -635,7 +663,13 @@ function AppLayout({
 
                     {/* 완료 화면 */}
                     {isComplete ? (
-                        completeSlot || children
+                        completeSlot ||
+                        children || (
+                            <CompletePage
+                                receipt={receipt}
+                                onNewOrder={handleNewOrder}
+                            />
+                        )
                     ) : (
                         /* 일반 주문 화면: 카테고리 레일 + 메인 패널 + 하단 독 그리드 */
                         <div className="workspace">
