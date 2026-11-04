@@ -1,27 +1,52 @@
-from faster_whisper import WhisperModel
+import torch
+import sounddevice as sd
+from transformers import pipeline
 
-model = WhisperModel(
-    "medium",
-    device="cpu",
-    compute_type="int8"
+MODEL_NAME = "openai/whisper-large-v3-turbo"
+SAMPLE_RATE = 16000
+RECORD_SECONDS = 5
+
+device = torch.device(
+    "mps" if torch.backends.mps.is_available() else "cpu"
 )
 
-segments, info = model.transcribe(
-    "audio/stt_recoding2.m4a",
-    language="ko",
-    beam_size=5,
-    condition_on_previous_text=False,
-    initial_prompt="""
-    키오스크 주문 음성입니다.
-    한국어 표준어와 사투리가 포함될 수 있습니다.
-    햄버거, 세트, 콜라, 감자튀김, 아메리카노 등의 메뉴를 주문합니다.
-    """
+print("STT 모델 불러오는 중...")
+
+stt_pipeline = pipeline(
+    "automatic-speech-recognition",
+    model=MODEL_NAME,
+    device=device
 )
 
-text = ""
+print("STT 모델 준비 완료!")
 
-for segment in segments:
-    text += segment.text
 
-print("인식 결과:")
-print(text.strip())
+def transcribe_from_microphone():
+    print("\n음성을 입력하세요. (5초 녹음)")
+
+    audio = sd.rec(
+        int(RECORD_SECONDS * SAMPLE_RATE),
+        samplerate=SAMPLE_RATE,
+        channels=1,
+        dtype="float32"
+    )
+
+    sd.wait()
+
+    print("음성 인식 중...")
+
+    result = stt_pipeline(
+        {
+            "raw": audio.flatten(),
+            "sampling_rate": SAMPLE_RATE
+        },
+        generate_kwargs={
+            "language": "korean"
+        }
+    )
+
+    text = result["text"].strip()
+
+    print("인식 결과:", text)
+
+    return text
