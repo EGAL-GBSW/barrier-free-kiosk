@@ -30,7 +30,7 @@ import {
  *  1. start 화면:
  *     - 헤더/스텝바 없이 전체 화면 프로모션 및 매장/포장 선택
  *     - startSlot 전달 시 해당 슬롯 렌더링, 미전달 시 레퍼런스 기반 기본 시작 화면(renderDefaultStart) 표시
- *     - 매장/포장 선택 시 OrderModeModal을 통해 음성 주문/터치 주문 분기 지원
+ *     - 매장/포장 선택 시 바로 메뉴 화면으로 이동 (터치·음성 주문 모두 메뉴 화면에서 사용)
  *  2. complete 화면:
  *     - KioskHeader (66px) + StepBar (66px, 5단계 활성)
  *     - completeSlot 렌더링 (단일 페이지 flex 레이아웃)
@@ -83,7 +83,6 @@ function AppLayout({
     // 모드 및 페이지 상태 관리
     const [pageOverride, setPageOverride] = useState(null)
     const [prevPropPage, setPrevPropPage] = useState(page)
-    const [showOrderModeModal, setShowOrderModeModal] = useState(false)
     const [orderType, setOrderType] = useState("DINE_IN")
 
     // 메뉴 탐색 및 장바구니 상태 관리
@@ -302,22 +301,11 @@ function AppLayout({
         handleHomeNavigation()
     }
 
-    // 시작 화면 매장/포장 클릭 시 모드 선택 모달 표시
+    // 시작 화면 매장/포장 클릭 시 바로 메뉴 화면으로 이동 (음성 주문은 메뉴 화면에서 바로 사용)
     const handleBeginOrder = (type) => {
         setOrderType(type)
-        setShowOrderModeModal(true)
-    }
-
-    const handleOrderModeSelect = (selectedMode) => {
-        setShowOrderModeModal(false)
-        setInternalMode(selectedMode)
-        if (selectedMode === "voice") {
-            setInternalPage("voice")
-            voiceOrder.toggleListen()
-        } else {
-            setInternalPage("menu")
-        }
-        onHome?.(orderType, selectedMode)
+        setInternalPage("menu")
+        onHome?.(type, "touch")
     }
 
     const handleHomeNavigation = () => {
