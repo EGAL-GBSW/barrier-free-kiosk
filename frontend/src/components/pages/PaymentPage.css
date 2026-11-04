@@ -1,0 +1,420 @@
+/* ─── PaymentPage (전체 화면 결제) ───────────────────────────────
+ *  레퍼런스 ./frontend/kiosk.css
+ *  "Full-screen kiosk checkout; official Toss widgets remain in the payment panel." 기준
+ * ──────────────────────────────────────────────────────────────── */
+
+.kiosk-checkout.toss-checkout {
+    display: grid;
+    grid-template-rows: 72px 66px minmax(0, 1fr) 100px;
+    height: 100dvh;
+    padding: 0;
+    background: #f5f9fd;
+    color: #263a4c;
+    overflow: hidden;
+}
+
+/* ── 상단 ── */
+.checkout-top {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0 32px;
+    gap: 20px;
+    background: #f0f8ff;
+    border-bottom: 1px solid #d6e3ef;
+}
+
+.checkout-top h2 {
+    font-size: 1.7rem;
+    letter-spacing: -0.5px;
+    color: #263e59;
+}
+
+.checkout-brand {
+    font-size: 1.15rem;
+    font-weight: 750;
+    color: #315579;
+}
+
+.checkout-test-tag {
+    justify-self: end;
+    padding: 7px 13px;
+    border-radius: 6px;
+    background: #e4eef8;
+    color: #426589;
+    font-size: 0.85rem;
+    font-weight: 650;
+}
+
+.kiosk-checkout .order-stepbar {
+    height: 66px;
+}
+
+/* ── 본문 ── */
+.checkout-body {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.3fr);
+    gap: 30px;
+    padding: 24px 32px;
+    min-height: 0;
+    overflow: hidden;
+    max-width: 1440px;
+    width: 100%;
+    margin: auto;
+    height: 100%;
+}
+
+/* 주문 내역 */
+.checkout-order {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #d4e0eb;
+    border-radius: 10px;
+    min-height: 0;
+    padding: 24px;
+    overflow: hidden;
+}
+
+.checkout-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e2eaf1;
+}
+
+.checkout-section-title h3 {
+    font-size: 1.4rem;
+    font-weight: 750;
+}
+
+.checkout-section-title > span {
+    font-size: 1rem;
+    font-weight: 650;
+    color: #315f95;
+    background: #eaf3fd;
+    padding: 7px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.checkout-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.checkout-item {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 1px solid #e6edf3;
+}
+
+.checkout-item .product-photo {
+    width: 78px;
+    height: 78px;
+    border-radius: 7px;
+    mix-blend-mode: multiply;
+}
+
+.checkout-item h3 {
+    font-size: 1.12rem;
+    line-height: 1.4;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.checkout-item p {
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: #6a7d90;
+    margin-bottom: 5px;
+}
+
+.checkout-item div > span {
+    font-size: 0.9rem;
+    color: #486078;
+}
+
+.checkout-item > strong {
+    font-size: 1.15rem;
+    color: #233f5d;
+    white-space: nowrap;
+}
+
+.checkout-order-note {
+    font-size: 0.88rem;
+    color: #6a7d90;
+    line-height: 1.6;
+    padding-top: 17px;
+    margin-top: auto;
+}
+
+/* 결제 수단 */
+.checkout-methods {
+    width: 100%;
+    max-width: 720px;
+    justify-self: center;
+    min-height: 0;
+    overflow: auto;
+    background: #fff;
+    border: 1px solid #d4e0eb;
+    border-radius: 10px;
+    padding: 18px 18px 12px;
+    scrollbar-width: thin;
+}
+
+.checkout-provider {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 4px 14px 14px;
+    border-bottom: 1px solid #e6edf3;
+    font-size: 0.9rem;
+    color: #698198;
+}
+
+.checkout-provider strong {
+    color: #315fa0;
+    font-size: 1rem;
+}
+
+#toss-payment-method,
+#toss-agreement {
+    width: 100%;
+    min-width: 0;
+}
+
+.kiosk-checkout .toss-status {
+    font-size: 1rem;
+    line-height: 1.6;
+    padding: 20px 14px;
+    color: #6b7684;
+}
+
+.kiosk-checkout .toss-retry {
+    margin: 0 10px;
+    min-height: 52px;
+    padding: 14px 24px;
+    border-radius: 8px;
+    background: #eef4fd;
+    color: #276cce;
+    font-size: 1rem;
+}
+
+.kiosk-checkout .toss-test-note {
+    padding: 12px 14px 0;
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: #698198;
+}
+
+/* ── 하단 ── */
+.checkout-bottom {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr) minmax(300px, 380px);
+    gap: 0;
+    background: #fff;
+    border-top: 1px solid #ccddeb;
+    min-height: 0;
+}
+
+.checkout-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #edf3f8;
+    color: #315475;
+    border-right: 1px solid #d5e1eb;
+    font-size: 1.25rem;
+    font-weight: 700;
+    padding: 18px;
+}
+
+.checkout-back:hover {
+    background: #e3edf6;
+}
+
+.checkout-back .icon {
+    width: 28px;
+    height: 28px;
+}
+
+.checkout-grand-total {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 24px;
+    padding: 16px 32px;
+    color: #315475;
+}
+
+.checkout-grand-total > span {
+    font-size: 1.08rem;
+}
+
+.checkout-grand-total > strong {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1e3d62;
+    white-space: nowrap;
+}
+
+.kiosk-checkout .toss-pay-button {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    border-radius: 0;
+    font-size: 1.4rem;
+    font-weight: 750;
+    background: #184bc1;
+    color: #fff;
+    padding: 18px;
+}
+
+.kiosk-checkout .toss-pay-button:disabled {
+    background: #a9bfe9;
+    color: #fff;
+    opacity: 1;
+}
+
+.kiosk-checkout .toss-pay-button:hover:not(:disabled) {
+    background: #123b9b;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 1050px) {
+    .checkout-body {
+        gap: 18px;
+        padding: 18px;
+        grid-template-columns: minmax(240px, 0.85fr) minmax(0, 1.3fr);
+    }
+    .checkout-order {
+        padding: 18px;
+    }
+    .checkout-item {
+        grid-template-columns: 60px minmax(0, 1fr);
+        gap: 10px;
+    }
+    .checkout-item .product-photo {
+        width: 60px;
+        height: 60px;
+        grid-row: 1 / 3;
+    }
+    .checkout-item > strong {
+        grid-column: 2;
+        font-size: 1rem;
+    }
+    .checkout-item h3 {
+        font-size: 1rem;
+    }
+    .checkout-bottom {
+        grid-template-columns: 180px minmax(0, 1fr) 270px;
+    }
+    .checkout-grand-total {
+        gap: 12px;
+        padding: 12px 20px;
+    }
+    .checkout-grand-total > strong {
+        font-size: 1.7rem;
+    }
+    .checkout-grand-total > span {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 760px) {
+    .kiosk-checkout.toss-checkout {
+        grid-template-rows: 62px 64px minmax(0, 1fr) 86px;
+    }
+    .checkout-top {
+        padding: 0 16px;
+        gap: 10px;
+    }
+    .checkout-top h2 {
+        font-size: 1.3rem;
+    }
+    .checkout-brand {
+        font-size: 0.85rem;
+    }
+    .checkout-test-tag {
+        font-size: 0.65rem;
+        padding: 6px 8px;
+    }
+    .kiosk-checkout .order-stepbar {
+        height: 64px;
+    }
+    .checkout-body {
+        display: flex;
+        flex-direction: column;
+        overflow: auto;
+        padding: 12px;
+        gap: 12px;
+    }
+    .checkout-order {
+        flex: 0 0 auto;
+        max-height: 270px;
+        min-height: 150px;
+        padding: 16px;
+    }
+    .checkout-section-title {
+        padding-bottom: 12px;
+    }
+    .checkout-section-title h3 {
+        font-size: 1.1rem;
+    }
+    .checkout-section-title > span {
+        font-size: 0.8rem;
+    }
+    .checkout-item {
+        padding: 12px 0;
+    }
+    .checkout-order-note {
+        display: none;
+    }
+    .checkout-methods {
+        overflow: visible;
+        flex: 0 0 auto;
+        max-width: none;
+        padding: 12px 8px;
+    }
+    .checkout-bottom {
+        grid-template-columns: 100px minmax(0, 1fr) minmax(140px, 1fr);
+    }
+    .checkout-back {
+        font-size: 0.9rem;
+        padding: 10px;
+        gap: 4px;
+    }
+    .checkout-back .icon {
+        width: 20px;
+    }
+    .checkout-grand-total {
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        padding: 8px;
+    }
+    .checkout-grand-total > span {
+        font-size: 0.68rem;
+    }
+    .checkout-grand-total > strong {
+        font-size: 1.3rem;
+    }
+    .kiosk-checkout .toss-pay-button {
+        font-size: 0.95rem;
+        padding: 12px 8px;
+    }
+}

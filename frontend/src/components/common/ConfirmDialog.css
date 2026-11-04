@@ -1,0 +1,98 @@
+/* ─── ConfirmDialog ──────────────────────────────────────────────
+ *  레퍼런스 ./frontend/style.css (.simple-modal) 기준
+ * ──────────────────────────────────────────────────────────────── */
+
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    background: rgba(30, 41, 59, 0.45);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.confirm-dialog {
+    width: 480px;
+    max-width: 100%;
+    padding: 38px 32px 30px;
+    border-radius: 20px;
+    background: #fff;
+    color: #233c57;
+    text-align: center;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.16);
+}
+
+.confirm-dialog .dialog-symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: #eaf2ff;
+    color: #184bc1;
+}
+
+.confirm-dialog .dialog-symbol svg {
+    width: 32px;
+    height: 32px;
+}
+
+.confirm-dialog h2 {
+    font-size: 1.5rem;
+    line-height: 1.45;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.confirm-dialog p {
+    font-size: 1rem;
+    color: #637b93;
+    word-break: keep-all;
+}
+
+.confirm-dialog .dialog-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.dialog-button {
+    flex: 1;
+    min-height: 60px;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.dialog-button.secondary {
+    background: #f1f6fa;
+    border: 1px solid #c9d9e6;
+    color: #233c57;
+}
+
+.dialog-button.secondary:hover {
+    background: #e4eef6;
+}
+
+.dialog-button.primary {
+    background: var(--brand, #184bc1);
+    color: #fff;
+}
+
+.dialog-button.primary:hover {
+    background: var(--brand-dark, #123b9b);
+}
+
+@media (max-width: 600px) {
+    .confirm-dialog {
+        padding: 30px 20px 22px;
+    }
+    .confirm-dialog h2 {
+        font-size: 1.25rem;
+    }
+}

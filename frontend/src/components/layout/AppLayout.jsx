@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import "./AppLayout.css"
 import KioskHeader from "./KioskHeader"
 import StepBar from "./StepBar"
 import Toast from "../common/Toast"
 import Overlay from "../common/Overlay"
+import ConfirmDialog from "../common/ConfirmDialog"
 import CategoryTabs from "../menu/CategoryTabs"
 import ProductGrid from "../menu/ProductGrid"
 import MenuPagination from "../menu/MenuPagination"
 import ProductModal from "../menu/ProductModal"
 import VoicePage from "../pages/VoicePage"
+import PaymentPage from "../pages/PaymentPage"
+import CompletePage from "../pages/CompletePage"
 import { useVoiceOrder } from "../voice/useVoiceOrder"
 import {
     MENUS,
@@ -27,7 +30,7 @@ import {
  *  1. start 화면:
  *     - 헤더/스텝바 없이 전체 화면 프로모션 및 매장/포장 선택
  *     - startSlot 전달 시 해당 슬롯 렌더링, 미전달 시 레퍼런스 기반 기본 시작 화면(renderDefaultStart) 표시
- *     - 매장/포장 선택 시 OrderModeModal을 통해 음성 주문/터치 주문 분기 지원
+ *     - 매장/포장 선택 시 바로 메뉴 화면으로 이동 (터치·음성 주문 모두 메뉴 화면에서 사용)
  *  2. complete 화면:
  *     - KioskHeader (66px) + StepBar (66px, 5단계 활성)
  *     - completeSlot 렌더링 (단일 페이지 flex 레이아웃)
@@ -37,6 +40,9 @@ import {
  *       [col 1, row 1] 카테고리 레일 (CategoryTabs: 터치/음성 모드 전환 및 글자 크기 제어)
  *       [col 2, row 1] 메인 패널 (터치 카탈로그 ProductGrid 또는 VoicePage 음성 주문 화면)
  *       [col 1/-1, row 2] 하단 독 (orderDockSlot 또는 기본 주문 독)
+ *  4. payment 화면 (레퍼런스 openTossCheckout):
+ *     - 하단 "결제하기" → 전체 화면 PaymentPage (왼쪽 주문 내역 + 오른쪽 토스 결제 수단)
+ *     - "이전으로" → 결제하기를 눌렀던 화면으로 복귀, "N원 결제하기" → onCheckout 호출
  *
  * Props:
  *   page             {string}    현재 페이지 키 ('start'|'menu'|'voice'|'cart'|'payment'|'complete')
@@ -46,7 +52,8 @@ import {
  *   font             {number}    글자 크기 단계 (0=일반, 1=큰글씨, 2=최대)
  *   onFont           {Function}  글자 크기 변경 핸들러
  *   isCheckoutOpen   {boolean}   토스 결제 모달 오픈 여부 (StepBar 스타일 제어)
- *   toast            {object}    { message: string, visible: boolean }
+ *   onCheckout       {Function}  주문 확인 후 결제 진행 ({ cart, orderType }) => void
+ *   toast           {object}    { message: string, visible: boolean }
  *   overlay          {object}    { visible: boolean, onClose: Function, children: ReactNode }
  *   startSlot        {ReactNode} start 화면 커스텀 슬롯
  *   categoryTabsSlot {ReactNode} 좌측 카테고리 탭 커스텀 슬롯
@@ -63,6 +70,7 @@ function AppLayout({
     font = 0,
     onFont,
     isCheckoutOpen = false,
+    onCheckout,
     toast: toastProps = { message: "", visible: false },
     overlay: overlayProps = { visible: false },
     startSlot,
@@ -75,12 +83,18 @@ function AppLayout({
     // 모드 및 페이지 상태 관리
     const [pageOverride, setPageOverride] = useState(null)
     const [prevPropPage, setPrevPropPage] = useState(page)
+    const [orderType, setOrderType] = useState("DINE_IN")
 
     // 메뉴 탐색 및 장바구니 상태 관리
     const [activeCategory, setActiveCategory] = useState("all")
     const [menuPage, setMenuPage] = useState(0)
     const [cart, setCart] = useState([])
     const [selectedProduct, setSelectedProduct] = useState(null)
+    const [editingIndex, setEditingIndex] = useState(null)
+    const [showClearConfirm, setShowClearConfirm] = useState(false)
+    const [checkoutReturnPage, setCheckoutReturnPage] = useState("menu")
+    const [receipt, setReceipt] = useState(null)
+    const receiptSequence = useRef(0)
     const [internalToast, setInternalToast] = useState({
         message: "",
         visible: false,
@@ -123,7 +137,8 @@ function AppLayout({
     }, [isStart, elapsed])
 
     const activeElapsed = elapsed || (isStart ? "00:00" : internalElapsed)
-    const stepNumber = isComplete ? 5 : currentStep
+    const STEP_BY_PAGE = { payment: 4, complete: 5 }
+    const stepNumber = STEP_BY_PAGE[activePage] ?? currentStep
 
     const showToast = (message) => {
         setInternalToast({ message, visible: true })
@@ -150,6 +165,41 @@ function AppLayout({
             return [...prevCart, { ...options, id: product.id, key }]
         })
         showToast(`${product.name} ${options.quantity}개를 담았어요.`)
+    }
+
+    // 옵션 변경: 같은 옵션 항목이 있으면 합치고, 없으면 제자리에서 교체
+    const handleEditLine = (index, product, options) => {
+        const key = lineKey(product.id, options)
+        setCart((prev) => {
+            const rest = prev.filter((_, i) => i !== index)
+            const existingIdx = rest.findIndex((line) => line.key === key)
+            if (existingIdx >= 0) {
+                rest[existingIdx] = {
+                    ...rest[existingIdx],
+                    quantity: Math.min(
+                        99,
+                        rest[existingIdx].quantity + options.quantity
+                    ),
+                }
+                return rest
+            }
+            const next = [...prev]
+            next[index] = { ...options, id: product.id, key }
+            return next
+        })
+        showToast(`${product.name} ${options.quantity}개로 변경했어요.`)
+    }
+
+    const openEditLine = (index) => {
+        const m = MENUS.find((menu) => menu.id === cart[index]?.id)
+        if (!m) return
+        setEditingIndex(index)
+        setSelectedProduct(m)
+    }
+
+    const closeProductModal = () => {
+        setSelectedProduct(null)
+        setEditingIndex(null)
     }
 
     // ── 음성 주문 Web Speech API 훅 연동 ──
@@ -206,12 +256,54 @@ function AppLayout({
     }
 
     const handleClearCart = () => {
+        setShowClearConfirm(false)
         setCart([])
         showToast("선택한 메뉴를 모두 취소했어요.")
     }
 
-    // 매장/포장 선택 후 메뉴에서 바로 음성 주문 버튼을 사용할 수 있습니다.
+    // 하단 "결제하기": 레퍼런스 openTossCheckout처럼 전체 화면 결제(주문 내역 + 결제 수단)로 이동
+    const handleDockPay = () => {
+        if (!cart.length) return
+        voiceOrder.stopListening()
+        setCheckoutReturnPage(activePage)
+        setInternalPage("payment")
+    }
+
+    const handleCheckoutBack = () => {
+        setInternalPage(checkoutReturnPage)
+    }
+
+    const handleCheckout = (widgets) => {
+        if (onCheckout) {
+            onCheckout({ cart, orderType, widgets })
+            return
+        }
+        // TODO: 백엔드 결제 승인(/payments/confirm) 연동 전까지 임시로 바로 결제 완료 처리
+        receiptSequence.current += 1
+        setReceipt({
+            number: String(receiptSequence.current).padStart(3, "0"),
+            cart: cart.map((line) => ({ ...line })),
+            total: total(cart),
+            type: orderType,
+            method: "테스트 결제",
+            approved: false,
+        })
+        setInternalPage("complete")
+    }
+
+    // 결제 완료 후 "새로운 주문 시작하기": 주문 상태 초기화 후 시작 화면으로
+    const handleNewOrder = () => {
+        setCart([])
+        setReceipt(null)
+        setOrderType("DINE_IN")
+        setActiveCategory("all")
+        setMenuPage(0)
+        handleHomeNavigation()
+    }
+
+    // 시작 화면 매장/포장 클릭 시 바로 메뉴 화면으로 이동 (음성 주문은 메뉴 화면에서 바로 사용)
     const handleBeginOrder = (type) => {
+        setOrderType(type)
         setInternalPage("menu")
         onHome?.(type, "touch")
     }
@@ -383,9 +475,7 @@ function AppLayout({
                                         <button
                                             type="button"
                                             className="tray-product"
-                                            onClick={() =>
-                                                setSelectedProduct(m)
-                                            }
+                                            onClick={() => openEditLine(idx)}
                                             aria-label={`${
                                                 m.name
                                             } ${optionsText(line)} 옵션 변경`}
@@ -484,7 +574,7 @@ function AppLayout({
                         type="button"
                         className="dock-cancel"
                         disabled={cart.length === 0}
-                        onClick={handleClearCart}
+                        onClick={() => setShowClearConfirm(true)}
                     >
                         전체 취소
                     </button>
@@ -493,7 +583,7 @@ function AppLayout({
                     type="button"
                     className="dock-pay"
                     disabled={cart.length === 0}
-                    onClick={() => {}}
+                    onClick={handleDockPay}
                 >
                     <svg
                         className="icon"
@@ -530,11 +620,23 @@ function AppLayout({
             {/* ── 1. start 화면 ── */}
             {isStart && (startSlot || children || renderDefaultStart())}
 
-            {/* ── 2. start 제외 화면: 헤더 + 스텝바 공통 ── */}
-            {!isStart && (
+            {/* ── 결제 화면: 주문 내역 확인 + 결제 수단 (전체 화면, 자체 상단바·스텝바) ── */}
+            {activePage === "payment" && (
+                <PaymentPage
+                    cart={cart}
+                    orderType={orderType}
+                    onBack={handleCheckoutBack}
+                    onPay={handleCheckout}
+                />
+            )}
+
+            {/* ── 2. start·payment 제외 화면: 헤더 + 스텝바 공통 ── */}
+            {!isStart && activePage !== "payment" && (
                 <>
                     <KioskHeader
-                        onHome={handleHomeNavigation}
+                        onHome={
+                            isComplete ? handleNewOrder : handleHomeNavigation
+                        }
                         elapsed={activeElapsed}
                         showHome={true}
                         language="한국어"
@@ -546,7 +648,13 @@ function AppLayout({
 
                     {/* 완료 화면 */}
                     {isComplete ? (
-                        completeSlot || children
+                        completeSlot ||
+                        children || (
+                            <CompletePage
+                                receipt={receipt}
+                                onNewOrder={handleNewOrder}
+                            />
+                        )
                     ) : (
                         /* 일반 주문 화면: 카테고리 레일 + 메인 패널 + 하단 독 그리드 */
                         <div className="workspace">
@@ -566,10 +674,28 @@ function AppLayout({
 
             {/* ── 상품 옵션 선택 모달 ── */}
             <ProductModal
+                key={`${selectedProduct?.id}:${editingIndex}`}
                 product={selectedProduct}
                 isOpen={Boolean(selectedProduct)}
-                onClose={() => setSelectedProduct(null)}
-                onAddToCart={handleAddToCart}
+                onClose={closeProductModal}
+                editOptions={
+                    editingIndex !== null ? cart[editingIndex] : null
+                }
+                onAddToCart={(product, options) =>
+                    editingIndex !== null
+                        ? handleEditLine(editingIndex, product, options)
+                        : handleAddToCart(product, options)
+                }
+            />
+
+            {/* ── 전체 취소 확인 ── */}
+            <ConfirmDialog
+                isOpen={showClearConfirm}
+                title="선택한 메뉴를 모두 취소할까요?"
+                description="선택한 메뉴가 모두 삭제됩니다."
+                confirmLabel="전체 취소"
+                onConfirm={handleClearCart}
+                onCancel={() => setShowClearConfirm(false)}
             />
 
             {/* ── 전역 레이어 ── */}
