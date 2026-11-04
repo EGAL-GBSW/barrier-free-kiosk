@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>결제 완료 화면 미리보기 · 모그커피</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!--
+      결제 완료 화면 미리보기 (개발용)
+      - 토스 결제 단계를 거치지 않고 실제 CompletePage 컴포넌트를 예시 주문 데이터로 렌더링합니다.
+      - 개발 서버(npm run dev) 실행 후 http://localhost:5173/preview-complete.html 로 접속하세요.
+      - 주소 뒤에 ?approved=1 을 붙이면 결제 승인 완료 상태(테스트 안내 문구 없음)를 볼 수 있습니다.
+      - 빌드 결과물(npm run build)에는 포함되지 않습니다.
+    -->
+    <div id="root"></div>
+    <script type="module">
+      import { createElement as h, useEffect, useState } from "react"
+      import { createRoot } from "react-dom/client"
+      import "/src/index.css"
+      import "/src/components/layout/AppLayout.css"
+      import KioskHeader from "/src/components/layout/KioskHeader.jsx"
+      import StepBar from "/src/components/layout/StepBar.jsx"
+      import CompletePage from "/src/components/pages/CompletePage.jsx"
+      import { lineKey, total } from "/src/components/menu/menuData.js"
+
+      // 예시 주문: 아이스 아메리카노 2잔 + 생딸기 케이크 1개, 매장 이용
+      const cart = [
+        { id: 1, temperature: "ICE", size: "Regular", shots: 0, quantity: 2 },
+        { id: 7, temperature: "", size: "Regular", shots: 0, quantity: 1 },
+      ].map((line) => ({ ...line, key: lineKey(line.id, line) }))
+
+      const receipt = {
+        number: "001",
+        cart,
+        total: total(cart),
+        type: "DINE_IN",
+        method: "테스트 결제",
+        approved: new URLSearchParams(location.search).get("approved") === "1",
+      }
+
+      // AppLayout의 complete 화면 구성(헤더 + 스텝바 5단계 + CompletePage)을 그대로 재현
+      function Preview() {
+        const [font, setFont] = useState(0)
+
+        useEffect(() => {
+          document.documentElement.dataset.font = ["normal", "large", "max"][font]
+          document.documentElement.dataset.screen = "complete"
+        }, [font])
+
+        const notice = () =>
+          alert("미리보기 화면입니다. 실제 앱에서는 주문을 초기화하고 시작 화면으로 돌아갑니다.")
+
+        return h(
+          "div",
+          { id: "app", className: "app-layout", "data-page": "complete", "data-screen": "complete" },
+          h(KioskHeader, { onHome: notice, elapsed: "02:15", showHome: true, font, onFont: setFont }),
+          h(StepBar, { currentStep: 5 }),
+          h(CompletePage, { receipt, onNewOrder: notice })
+        )
+      }
+
+      createRoot(document.getElementById("root")).render(h(Preview))
+    </script>
+  </body>
+</html>
