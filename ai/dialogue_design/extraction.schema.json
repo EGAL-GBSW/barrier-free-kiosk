@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EGAL dialogue condition patch v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["intent", "set", "clear", "clarification", "evidence"],
+  "properties": {
+    "intent": {"enum": ["discover_menu", "select_menu", "update_selection", "confirm_selection", "cancel_selection", "request_help", "ask_menu_info", "clarify"]},
+    "set": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "menu_id": {"type": "integer", "minimum": 1},
+        "category": {"enum": ["coffee", "noncoffee", "frappe", "bakery"]},
+        "temperature": {"enum": ["ICE", "HOT"]},
+        "size": {"enum": ["REGULAR", "LARGE"]},
+        "quantity": {"type": "integer", "minimum": 1, "maximum": 99},
+        "milk": {"enum": ["with", "without"]},
+        "caffeine": {"enum": ["with", "without"]},
+        "sweetness_preference": {"enum": ["less_sweet", "sweet"]}
+      }
+    },
+    "clear": {
+      "type": "array", "uniqueItems": true,
+      "items": {"enum": ["menu_id", "category", "temperature", "size", "quantity", "milk", "caffeine", "sweetness_preference"]}
+    },
+    "clarification": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["reason", "fields"],
+          "properties": {
+            "reason": {"enum": ["ambiguous_menu", "unknown_menu", "ambiguous_answer", "ambiguous_constraint", "unclear_audio", "unsupported_option", "conflicting_conditions"]},
+            "fields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["menu_id", "category", "temperature", "size", "quantity", "milk", "caffeine", "sweetness_preference"]}}
+          }
+        }
+      ]
+    },
+    "evidence": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}}
+  }
+}

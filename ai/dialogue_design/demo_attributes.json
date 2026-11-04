@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "data_status": "demo_only",
+  "notice": "대화·필터링 설계를 검증하기 위한 가정이다. 실제 매장의 레시피·성분·사이즈를 확인한 값이 아니며 운영 주문에 사용하지 않는다.",
+  "overrides": [
+    {"id": 1, "attributes": {"milk": false, "caffeine": true, "sweetness": "unsweetened"}, "sizes": ["REGULAR", "LARGE"]},
+    {"id": 2, "attributes": {"milk": true, "caffeine": true, "sweetness": "sweet"}, "sizes": ["REGULAR", "LARGE"]},
+    {"id": 3, "attributes": {"milk": true, "caffeine": true, "sweetness": "mild"}, "sizes": ["REGULAR", "LARGE"]},
+    {"id": 4, "attributes": {"milk": true, "caffeine": true, "sweetness": "sweet"}, "sizes": ["REGULAR", "LARGE"]},
+    {"id": 5, "attributes": {"milk": true, "caffeine": false, "sweetness": "sweet"}, "sizes": ["REGULAR", "LARGE"]},
+    {"id": 6, "attributes": {"milk": true, "caffeine": null, "sweetness": "sweet"}, "sizes": ["REGULAR", "LARGE"]},
+    {"id": 7, "attributes": {"milk": true, "caffeine": false, "sweetness": "sweet"}, "sizes": []},
+    {"id": 8, "attributes": {"milk": true, "caffeine": false, "sweetness": "mild"}, "sizes": []},
+    {"id": 9, "attributes": {"milk": true, "caffeine": false, "sweetness": "sweet"}, "sizes": []}
+  ]
+}
