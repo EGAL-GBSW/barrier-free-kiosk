@@ -35,91 +35,67 @@
     flex: 1;
 }
 
-/* ─── 오른쪽 하단 반원형 FAB (크게) ─── */
+/* ─── 오른쪽 하단 FAB: 호버와 관계없이 항상 튀어나온(확장된) 형태 유지 ─── */
 .voice-fab {
     position: fixed;
     bottom: 150px;
     right: 0;
     z-index: 100;
 
-    /* 기본 반원: 크게 */
-    width: 88px;
-    height: 88px;
-    border-radius: 50% 0 0 50%;
+    width: 220px;
+    height: 96px;
+    border-radius: 48px 0 0 48px;
     border: none;
     background: var(--brand, #184bc1);
     color: #fff;
     cursor: pointer;
-    box-shadow: -3px 3px 16px rgba(24, 75, 193, 0.35);
+    box-shadow: -4px 4px 24px rgba(24, 75, 193, 0.5);
 
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding-left: 18px;
+    padding-left: 24px;
     gap: 10px;
     overflow: hidden;
     white-space: nowrap;
 
-    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                background 0.2s,
-                box-shadow 0.2s,
-                border-radius 0.35s,
-                padding 0.35s;
+    /* 클릭 확장 애니메이션은 화면 오른쪽 끝을 기준으로 커짐 */
+    transform-origin: right center;
+    transition: background 0.2s, box-shadow 0.2s;
 }
 
 .voice-fab-icon {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
-    transition: width 0.35s, height 0.35s;
 }
 
 .voice-fab-label {
     font-size: 1rem;
     font-weight: 700;
     white-space: nowrap;
-    opacity: 0;
-    max-width: 0;
-    overflow: hidden;
-    transition: opacity 0.25s, max-width 0.35s;
 }
 
-/* 호버: 어두워지고 전체적으로 확장 */
+/* 호버: 크기는 그대로, 색만 진하게 */
 .voice-fab:hover {
     background: #113aa0;
-    width: 220px;
-    height: 96px;
-    padding-left: 24px;
-    box-shadow: -4px 4px 24px rgba(24, 75, 193, 0.5);
 }
 
-.voice-fab:hover .voice-fab-icon {
-    width: 40px;
-    height: 40px;
+/* 클릭 시 잠깐 전체적으로 확장됐다가 원래 크기로 복귀 */
+.voice-fab.bump {
+    animation: fab-bump 0.35s ease-out;
 }
 
-.voice-fab:hover .voice-fab-label {
-    opacity: 1;
-    max-width: 140px;
-}
-
-/* 확장 상태 (말풍선 열렸을 때) */
-.voice-fab.expanded {
-    width: 220px;
-    height: 96px;
-    padding-left: 24px;
-    border-radius: 48px 0 0 48px;
-}
-
-.voice-fab.expanded .voice-fab-icon {
-    width: 40px;
-    height: 40px;
-}
-
-.voice-fab.expanded .voice-fab-label {
-    opacity: 1;
-    max-width: 140px;
+@keyframes fab-bump {
+    0% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* 듣고 있는 상태 */
@@ -129,8 +105,21 @@
     animation: fab-pulse 1.3s infinite;
 }
 
+.voice-fab.listening.bump {
+    animation: fab-bump 0.35s ease-out, fab-pulse 1.3s infinite;
+}
+
 .voice-fab.listening:hover {
     background: #b71c1c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .voice-fab.bump {
+        animation: none;
+    }
+    .voice-fab.listening.bump {
+        animation: fab-pulse 1.3s infinite;
+    }
 }
 
 @keyframes fab-pulse {
@@ -200,25 +189,14 @@
     }
 
     .voice-fab {
-        width: 72px;
-        height: 72px;
+        width: 180px;
+        height: 80px;
         bottom: 140px;
-        padding-left: 14px;
+        padding-left: 18px;
+        border-radius: 40px 0 0 40px;
     }
 
     .voice-fab-icon {
-        width: 30px;
-        height: 30px;
-    }
-
-    .voice-fab:hover,
-    .voice-fab.expanded {
-        width: 180px;
-        height: 80px;
-    }
-
-    .voice-fab:hover .voice-fab-icon,
-    .voice-fab.expanded .voice-fab-icon {
         width: 34px;
         height: 34px;
     }
