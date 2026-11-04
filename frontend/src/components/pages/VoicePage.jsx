@@ -1,3 +1,4 @@
+import { useState } from "react"
 import "./VoicePage.css"
 import ProductGrid from "../menu/ProductGrid"
 import MenuPagination from "../menu/MenuPagination"
@@ -31,6 +32,9 @@ function VoicePage({
     speechStatus = "",
     onToggleListen,
 }) {
+    // 클릭 시 잠깐 확장되는 애니메이션 상태
+    const [bump, setBump] = useState(false)
+
     return (
         <section className="voice-page-v2" aria-label="음성 주문 화면">
             {/* 메뉴 카탈로그 (터치 메뉴와 동일) */}
@@ -56,8 +60,16 @@ function VoicePage({
             {/* 음성 주문 FAB (오른쪽 하단 반원) */}
             <button
                 type="button"
-                className={`voice-fab${listening ? " listening expanded" : ""}`}
-                onClick={onToggleListen}
+                className={`voice-fab${listening ? " listening" : ""}${
+                    bump ? " bump" : ""
+                }`}
+                onClick={() => {
+                    setBump(true)
+                    onToggleListen?.()
+                }}
+                onAnimationEnd={(e) => {
+                    if (e.animationName === "fab-bump") setBump(false)
+                }}
                 aria-pressed={listening}
                 aria-label={listening ? "음성 인식 중지" : "음성 주문 시작"}
             >
