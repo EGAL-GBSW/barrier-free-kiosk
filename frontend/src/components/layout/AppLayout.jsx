@@ -431,8 +431,6 @@ function AppLayout({
             categories={CATEGORIES}
             activeCategory={activeCategory}
             onSelectCategory={handleSelectCategory}
-            font={font}
-            onFont={onFont}
             orderMode={orderMode}
             onOrderMode={handleOrderMode}
         />
@@ -668,7 +666,8 @@ function AppLayout({
                         onHome={handleHomeRequest}
                         elapsed={activeElapsed}
                         showHome={true}
-                        language="한국어"
+                        font={font}
+                        onFont={onFont}
                     />
                     <StepBar
                         currentStep={stepNumber}

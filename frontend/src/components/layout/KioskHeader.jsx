@@ -1,4 +1,5 @@
 import "./KioskHeader.css"
+import FontControl from "../common/FontControl"
 
 /**
  * KioskHeader
@@ -7,21 +8,21 @@ import "./KioskHeader.css"
  * 구조 (grid 3열):
  *  1. [좌] 처음으로 (홈) 버튼 (showHome=false 시 mog. 워드마크)
  *  2. [중] 경과 시간 (order-elapsed)
- *  3. [우] 언어 선택 (language-options > language-option)
+ *  3. [우] 글자 크기 조절 (언어 변경 기능이 없어 기존 언어 버튼 자리에 배치)
  *
  * Props:
  *   onHome      {Function}  홈 버튼 클릭 핸들러
  *   elapsed     {string}    경과 시간 ("MM:SS")
  *   showHome    {boolean}   홈 버튼 표시 여부 (기본값 true)
- *   language    {string}    현재 언어 텍스트 (기본값 "한국어")
- *   onLanguage  {Function}  언어 변경 핸들러
+ *   font        {number}    글자 크기 단계 (0=일반, 1=큰글씨, 2=최대)
+ *   onFont      {Function}  글자 크기 변경 핸들러
  */
 function KioskHeader({
   onHome,
   elapsed = "00:00",
   showHome = true,
-  language = "한국어",
-  onLanguage,
+  font = 0,
+  onFont,
 }) {
   return (
     <header className="header kiosk-header">
@@ -62,17 +63,9 @@ function KioskHeader({
         {elapsed || "00:00"}
       </time>
 
-      {/* ── 우: 언어 선택 ── */}
-      <div className="language-options" role="group" aria-label="언어 선택">
-        <button
-          type="button"
-          className="language-option"
-          aria-pressed="true"
-          lang="ko"
-          onClick={onLanguage}
-        >
-          {language}
-        </button>
+      {/* ── 우: 글자 크기 조절 ── */}
+      <div className="header-tools">
+        <FontControl font={font} onFont={onFont} />
       </div>
     </header>
   )

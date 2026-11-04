@@ -1,35 +1,48 @@
 /* ─── FontControl ────────────────────────────────────────────────
- *  헤더(진한 초록) 위에 올라가므로 흰색 반투명 스타일
+ *  밝은 상단 헤더(#f7fbff) 위의 세그먼트 버튼
+ *  선택된 단계는 다른 선택 UI와 같은 파란색
  * ──────────────────────────────────────────────────────────────── */
 
 .font-control {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid #d3e0eb;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .font-btn {
-  min-height: 38px;
-  min-width: 52px;
-  padding: 7px 10px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.85rem;
-  font-weight: 500;
+  min-height: 40px;
+  min-width: 64px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #53677b;
+  font-size: 0.92rem;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
 }
-.font-btn:hover {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
+
+.font-btn:hover:not(.font-btn--active) {
+  background: #e7f4ff;
+  color: #284b70;
 }
+
 .font-btn--active {
-  background: #fff;
-  color: var(--brand);
-  border-color: #fff;
+  background: var(--brand, #184bc1);
+  color: #fff;
   font-weight: 700;
 }
 
 @media (max-width: 760px) {
-  .font-btn { min-width: 38px; padding: 6px 7px; font-size: 0.75rem; min-height: 34px; }
+  .font-btn {
+    min-width: 40px;
+    min-height: 34px;
+    padding: 5px 7px;
+    font-size: 0.75rem;
+  }
 }

@@ -19,8 +19,7 @@
 }
 
 /* ── 주문 방식 (터치 / 음성): 선택된 버튼은 파란색, 나머지는 흰색 ── */
-/* 카테고리 목록과 글자 크기 조절 사이 빈 공간의 가운데에 위치
-   (아래 .kiosk-tools의 margin-top: auto와 남는 공간을 반씩 나눔) */
+/* 탭 열 하단에 위치 (margin-top: auto) */
 .order-mode-toggle {
     display: flex;
     flex-direction: column;
@@ -29,16 +28,6 @@
     /* 카테고리 버튼과의 구분선 */
     padding-top: 16px;
     border-top: 1px solid #c6d7e6;
-}
-
-/* 글자 크기 조절: 탭 열이 스크롤되더라도 항상 하단에 보이도록 고정 */
-.category-tabs .kiosk-tools {
-    position: sticky;
-    bottom: 0;
-    z-index: 1;
-    flex-shrink: 0;
-    padding: 10px 0 16px;
-    background: #f1f7fc;
 }
 
 /* 카테고리 버튼(.category-tab)과 같은 직사각형 형태 */
@@ -110,44 +99,6 @@
     border-color: var(--brand, #184bc1);
 }
 
-.kiosk-tools {
-    margin-top: auto;
-    width: 100%;
-}
-
-.kiosk-tools .font-control {
-    border: 1px solid #d3e0eb;
-    border-radius: 8px;
-    background: #fff;
-    padding: 4px;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 2px;
-}
-
-.kiosk-tools .font-button {
-    min-width: 0;
-    padding: 8px 3px;
-    font-size: 0.78rem;
-    min-height: 42px;
-    border-radius: 5px;
-    border: 0;
-    background: transparent;
-    color: #555;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.15s, color 0.15s;
-}
-
-.kiosk-tools .font-button:hover:not(.active) {
-    background: #f0f4f8;
-}
-
-.kiosk-tools .font-button.active {
-    background: #e8e8e8;
-    color: #222;
-}
-
 @media (max-width: 1100px) {
     .category-tabs {
         padding: 14px 10px;
@@ -183,10 +134,5 @@
     .order-mode-button svg {
         width: 18px;
         height: 18px;
-    }
-    .kiosk-tools .font-button {
-        font-size: 0.72rem;
-        padding: 6px 2px;
-        min-height: 36px;
     }
 }

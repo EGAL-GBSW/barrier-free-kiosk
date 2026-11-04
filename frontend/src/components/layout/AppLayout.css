@@ -38,12 +38,11 @@
   align-items: stretch;
   justify-content: space-between;
   gap: 16px;
-  /* 아래 여백은 하단에 고정되는 글자 크기 조절(.kiosk-tools)이 가짐 */
-  padding: 20px 14px 0 18px;
+  padding: 20px 14px 16px 18px;
   background: #f1f7fc;
   border-right: 1px solid #dce7ef;
   min-height: 0;
-  /* 화면 높이가 부족하면 탭 열만 스크롤 (글자 크기 조절이 하단 독에 가려지지 않도록) */
+  /* 화면 높이가 부족하면 탭 열만 스크롤 (버튼이 하단 독에 가려지지 않도록) */
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -82,39 +81,6 @@
   background: var(--brand, #184bc1);
   color: #fff;
   border-color: var(--brand, #184bc1);
-}
-
-.kiosk-tools {
-  margin-top: auto;
-  width: 100%;
-}
-
-.kiosk-tools .font-control {
-  border: 1px solid #d3e0eb;
-  border-radius: 8px;
-  background: #fff;
-  padding: 4px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2px;
-}
-
-.kiosk-tools .font-button {
-  min-width: 0;
-  padding: 8px 3px;
-  font-size: 0.78rem;
-  min-height: 42px;
-  border-radius: 5px;
-  border: none;
-  background: transparent;
-  color: #53677b;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.kiosk-tools .font-button.active {
-  background: var(--brand, #184bc1);
-  color: #fff;
 }
 
 /* ── main 콘텐츠 패널 (col 2, row 1) ── */
@@ -766,15 +732,6 @@
     padding: 8px;
     font-size: 0.82rem;
     min-height: 50px;
-  }
-
-  .kiosk-tools .font-control {
-    grid-template-columns: 1fr;
-  }
-
-  .kiosk-tools .font-button {
-    min-height: 36px;
-    font-size: 0.72rem;
   }
 
   .product-grid {
