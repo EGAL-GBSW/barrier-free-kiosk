@@ -92,6 +92,7 @@ function AppLayout({
     const [selectedProduct, setSelectedProduct] = useState(null)
     const [editingIndex, setEditingIndex] = useState(null)
     const [showClearConfirm, setShowClearConfirm] = useState(false)
+    const [showHomeConfirm, setShowHomeConfirm] = useState(false)
     const [checkoutReturnPage, setCheckoutReturnPage] = useState("menu")
     const [receipt, setReceipt] = useState(null)
     const receiptSequence = useRef(0)
@@ -291,8 +292,19 @@ function AppLayout({
         setInternalPage("complete")
     }
 
-    // 결제 완료 후 "새로운 주문 시작하기": 주문 상태 초기화 후 시작 화면으로
+    // 헤더 "처음으로": 결제 완료 화면은 바로, 그 외 화면은 확인 팝업 후 초기화
+    const handleHomeRequest = () => {
+        if (isComplete) {
+            handleNewOrder()
+            return
+        }
+        voiceOrder.stopListening()
+        setShowHomeConfirm(true)
+    }
+
+    // "새로운 주문 시작하기" / "처음으로" 확인: 담은 메뉴 등 주문 상태 초기화 후 시작 화면으로
     const handleNewOrder = () => {
+        setShowHomeConfirm(false)
         setCart([])
         setReceipt(null)
         setOrderType("DINE_IN")
@@ -634,9 +646,7 @@ function AppLayout({
             {!isStart && activePage !== "payment" && (
                 <>
                     <KioskHeader
-                        onHome={
-                            isComplete ? handleNewOrder : handleHomeNavigation
-                        }
+                        onHome={handleHomeRequest}
                         elapsed={activeElapsed}
                         showHome={true}
                         language="한국어"
@@ -696,6 +706,20 @@ function AppLayout({
                 confirmLabel="전체 취소"
                 onConfirm={handleClearCart}
                 onCancel={() => setShowClearConfirm(false)}
+            />
+
+            {/* ── 처음으로 확인 ── */}
+            <ConfirmDialog
+                isOpen={showHomeConfirm}
+                title="처음으로 돌아갈까요?"
+                description={
+                    cart.length
+                        ? "선택한 메뉴와 진행 중인 주문이 초기화돼요."
+                        : "주문 방법 선택 화면으로 돌아가요."
+                }
+                confirmLabel="처음으로"
+                onConfirm={handleNewOrder}
+                onCancel={() => setShowHomeConfirm(false)}
             />
 
             {/* ── 전역 레이어 ── */}
