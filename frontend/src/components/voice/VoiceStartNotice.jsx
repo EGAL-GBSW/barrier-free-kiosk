@@ -11,7 +11,9 @@ import "./VoiceStartNotice.css"
 function VoiceStartNotice({ onDone }) {
     return (
         <div className="voice-start-notice" aria-hidden="true">
-            <p onAnimationEnd={onDone}>음성 주문이 시작되었습니다.</p>
+            <p onAnimationEnd={onDone}>
+                음성 주문이 시작되었습니다. 원하시는 메뉴를 말씀해주세요.
+            </p>
         </div>
     )
 }
