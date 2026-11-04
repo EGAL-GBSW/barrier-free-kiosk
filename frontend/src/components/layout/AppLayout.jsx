@@ -13,6 +13,7 @@ import VoicePage from "../pages/VoicePage"
 import PaymentPage from "../pages/PaymentPage"
 import CompletePage from "../pages/CompletePage"
 import { useVoiceOrder } from "../voice/useVoiceOrder"
+import VoiceStartNotice from "../voice/VoiceStartNotice"
 import {
     MENUS,
     CATEGORIES,
@@ -84,6 +85,8 @@ function AppLayout({
     const [pageOverride, setPageOverride] = useState(null)
     const [prevPropPage, setPrevPropPage] = useState(page)
     const [orderType, setOrderType] = useState("DINE_IN")
+    const [orderMode, setOrderMode] = useState("touch")
+    const [voiceNoticeKey, setVoiceNoticeKey] = useState(0)
 
     // 메뉴 탐색 및 장바구니 상태 관리
     const [activeCategory, setActiveCategory] = useState("all")
@@ -226,6 +229,20 @@ function AppLayout({
         (safePage + 1) * pageSize
     )
 
+    // 왼쪽 탭의 터치/음성 주문 전환
+    // 음성 주문: 음성 인식 시작 + 화면 중앙에 "음성 주문이 시작되었습니다." 안내
+    const handleOrderMode = (mode) => {
+        setOrderMode(mode)
+        if (mode === "touch") {
+            voiceOrder.stopListening()
+            return
+        }
+        const supported =
+            window.SpeechRecognition || window.webkitSpeechRecognition
+        if (!voiceOrder.listening) voiceOrder.toggleListen()
+        if (supported) setVoiceNoticeKey((k) => k + 1)
+    }
+
     const handleSelectCategory = (catId) => {
         setActiveCategory(catId)
         setMenuPage(0)
@@ -308,6 +325,8 @@ function AppLayout({
         setCart([])
         setReceipt(null)
         setOrderType("DINE_IN")
+        setOrderMode("touch")
+        setVoiceNoticeKey(0)
         setActiveCategory("all")
         setMenuPage(0)
         handleHomeNavigation()
@@ -414,6 +433,8 @@ function AppLayout({
             onSelectCategory={handleSelectCategory}
             font={font}
             onFont={onFont}
+            orderMode={orderMode}
+            onOrderMode={handleOrderMode}
         />
     )
 
@@ -428,9 +449,7 @@ function AppLayout({
                     totalPages={totalPages}
                     onSelectProduct={(p) => { voiceOrder.stopListening(); setSelectedProduct(p) }}
                     onPageChange={(p) => handlePageChange(p - 1)}
-                    listening={voiceOrder.listening}
                     speechStatus={voiceOrder.speechStatus}
-                    onToggleListen={voiceOrder.toggleListen}
                 />
             )
         }
@@ -707,6 +726,14 @@ function AppLayout({
                 onConfirm={handleClearCart}
                 onCancel={() => setShowClearConfirm(false)}
             />
+
+            {/* ── 음성 주문 시작 안내 (크게 띄웠다가 천천히 사라짐) ── */}
+            {voiceNoticeKey > 0 && (
+                <VoiceStartNotice
+                    key={voiceNoticeKey}
+                    onDone={() => setVoiceNoticeKey(0)}
+                />
+            )}
 
             {/* ── 처음으로 확인 ── */}
             <ConfirmDialog

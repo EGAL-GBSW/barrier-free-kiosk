@@ -18,6 +18,65 @@
     box-sizing: border-box;
 }
 
+/* ── 주문 방식 (터치 / 음성): 선택된 버튼은 파란색, 나머지는 흰색 ── */
+/* 카테고리 목록과 글자 크기 조절 사이 빈 공간의 가운데에 위치
+   (아래 .kiosk-tools의 margin-top: auto와 남는 공간을 반씩 나눔) */
+.order-mode-toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+    /* 카테고리 버튼과의 구분선 */
+    padding-top: 16px;
+    border-top: 1px solid #c6d7e6;
+}
+
+/* 글자 크기 조절: 탭 열이 스크롤되더라도 항상 하단에 보이도록 고정 */
+.category-tabs .kiosk-tools {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    flex-shrink: 0;
+    padding: 10px 0 16px;
+    background: #f1f7fc;
+}
+
+/* 카테고리 버튼(.category-tab)과 같은 직사각형 형태 */
+.order-mode-button {
+    width: 100%;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 17px;
+    border: 1px solid #c6d7e6;
+    border-radius: 8px;
+    background: #fff;
+    color: #344c64;
+    font-size: 1.08rem;
+    font-weight: 650;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.order-mode-button svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.order-mode-button:hover:not(.active) {
+    background: #e7f4ff;
+    border-color: #184bc1;
+}
+
+.order-mode-button.active {
+    background: var(--brand, #184bc1);
+    border-color: var(--brand, #184bc1);
+    color: #fff;
+}
+
 .category-tab-list {
     display: flex;
     flex-direction: column;
@@ -94,7 +153,8 @@
         padding: 14px 10px;
         gap: 12px;
     }
-    .category-tab {
+    .category-tab,
+    .order-mode-button {
         font-size: 0.95rem;
         padding: 10px 12px;
         min-height: 50px;
@@ -106,11 +166,23 @@
         padding: 10px 7px;
         gap: 8px;
     }
-    .category-tab {
+    .order-mode-toggle {
+        gap: 6px;
+    }
+    .category-tab,
+    .order-mode-button {
         padding: 8px 6px;
         font-size: 0.82rem;
         min-height: 42px;
         text-align: center;
+    }
+    .order-mode-button {
+        justify-content: center;
+        gap: 4px;
+    }
+    .order-mode-button svg {
+        width: 18px;
+        height: 18px;
     }
     .kiosk-tools .font-button {
         font-size: 0.72rem;

@@ -38,11 +38,16 @@
   align-items: stretch;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px 14px 16px 18px;
+  /* 아래 여백은 하단에 고정되는 글자 크기 조절(.kiosk-tools)이 가짐 */
+  padding: 20px 14px 0 18px;
   background: #f1f7fc;
   border-right: 1px solid #dce7ef;
   min-height: 0;
-  overflow: hidden;
+  /* 화면 높이가 부족하면 탭 열만 스크롤 (글자 크기 조절이 하단 독에 가려지지 않도록) */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   box-sizing: border-box;
 }
 
