@@ -8,7 +8,6 @@ import CategoryTabs from "../menu/CategoryTabs"
 import ProductGrid from "../menu/ProductGrid"
 import MenuPagination from "../menu/MenuPagination"
 import ProductModal from "../menu/ProductModal"
-import OrderModeModal from "../order/OrderModeModal"
 import VoicePage from "../pages/VoicePage"
 import { useVoiceOrder } from "../voice/useVoiceOrder"
 import {
@@ -74,11 +73,8 @@ function AppLayout({
     children,
 }) {
     // 모드 및 페이지 상태 관리
-    const [internalMode, setInternalMode] = useState("touch")
     const [pageOverride, setPageOverride] = useState(null)
     const [prevPropPage, setPrevPropPage] = useState(page)
-    const [showOrderModeModal, setShowOrderModeModal] = useState(false)
-    const [pendingOrderType, setPendingOrderType] = useState("DINE_IN")
 
     // 메뉴 탐색 및 장바구니 상태 관리
     const [activeCategory, setActiveCategory] = useState("all")
@@ -214,28 +210,15 @@ function AppLayout({
         showToast("선택한 메뉴를 모두 취소했어요.")
     }
 
-    // 시작 화면 매장/포장 클릭 시 모드 선택 모달 표시
+    // 매장/포장 선택 후 메뉴에서 바로 음성 주문 버튼을 사용할 수 있습니다.
     const handleBeginOrder = (type) => {
-        setPendingOrderType(type)
-        setShowOrderModeModal(true)
-    }
-
-    const handleOrderModeSelect = (selectedMode) => {
-        setShowOrderModeModal(false)
-        setInternalMode(selectedMode)
-        if (selectedMode === "voice") {
-            setInternalPage("voice")
-            voiceOrder.toggleListen()
-        } else {
-            setInternalPage("menu")
-        }
-        onHome?.(pendingOrderType, selectedMode)
+        setInternalPage("menu")
+        onHome?.(type, "touch")
     }
 
     const handleHomeNavigation = () => {
         voiceOrder.stopListening()
         setInternalPage("start")
-        setInternalMode("touch")
         onHome?.("start")
     }
 
@@ -332,14 +315,14 @@ function AppLayout({
 
     // 기본 메인 패널 (터치 카탈로그 또는 VoicePage 음성 주문 화면 렌더링)
     const renderDefaultMainPanel = () => {
-        if (activePage === "voice") {
+        if (activePage === "menu" || activePage === "voice") {
             return (
                 <VoicePage
                     products={visibleProducts}
                     pageSize={pageSize}
                     currentPage={safePage + 1}
                     totalPages={totalPages}
-                    onSelectProduct={(p) => setSelectedProduct(p)}
+                    onSelectProduct={(p) => { voiceOrder.stopListening(); setSelectedProduct(p) }}
                     onPageChange={(p) => handlePageChange(p - 1)}
                     listening={voiceOrder.listening}
                     speechStatus={voiceOrder.speechStatus}
@@ -580,13 +563,6 @@ function AppLayout({
                     )}
                 </>
             )}
-
-            {/* ── 주문 방식(음성/터치) 선택 모달 ── */}
-            <OrderModeModal
-                isOpen={showOrderModeModal}
-                onClose={() => setShowOrderModeModal(false)}
-                onSelect={handleOrderModeSelect}
-            />
 
             {/* ── 상품 옵션 선택 모달 ── */}
             <ProductModal
