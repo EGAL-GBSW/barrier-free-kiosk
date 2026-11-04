@@ -88,26 +88,26 @@
   color: #fff;
 }
 
-/* ── 토스 체크아웃 모달 열림 시 스텝 강조 ── */
+/* ── 결제 화면(체크아웃) 열림 시 스텝 강조: 다른 화면과 같은 파란색 체계 ── */
 .order-stepbar[data-checkout-open] .order-step:nth-child(2),
 .order-stepbar[data-checkout-open] .order-step:nth-child(3) {
-  color: #464646;
+  color: #547494;
 }
 
 .order-stepbar[data-checkout-open] .order-step:nth-child(2) .step-circle,
 .order-stepbar[data-checkout-open] .order-step:nth-child(3) .step-circle {
-  border-color: #454545;
-  background: #454545;
-  color: #fff;
+  background: #e8f2ff;
+  border-color: #e8f2ff;
+  color: var(--brand, #184bc1);
 }
 
 .order-stepbar[data-checkout-open] .order-step:nth-child(4) {
-  color: #202020;
+  color: var(--brand, #184bc1);
 }
 
 .order-stepbar[data-checkout-open] .order-step:nth-child(4) .step-circle {
-  border-color: #262626;
-  background: #262626;
+  background: var(--brand, #184bc1);
+  border-color: var(--brand, #184bc1);
   color: #fff;
 }
 
