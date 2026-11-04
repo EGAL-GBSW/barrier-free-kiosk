@@ -1,6 +1,6 @@
 /* ─── KioskHeader ────────────────────────────────────────────────
  *  레퍼런스 ./frontend/kiosk.css 기준
- *  grid 3열: [홈 버튼/워드마크(1fr)] [경과 시간(auto)] [언어 선택(1fr)]
+ *  grid 3열: [홈 버튼/워드마크(1fr)] [경과 시간(auto)] [글자 크기 조절(1fr)]
  * ──────────────────────────────────────────────────────────────── */
 
 .kiosk-header {
@@ -72,37 +72,11 @@
   text-align: center;
 }
 
-/* ── 우: 언어 버튼 ── */
-.language-options {
+/* ── 우: 글자 크기 조절 ── */
+.header-tools {
   justify-self: end;
   display: flex;
   align-items: center;
-}
-
-.language-option {
-  min-width: 92px;
-  min-height: 44px;
-  padding: 8px 19px;
-  border-radius: 8px;
-  background: #383838;
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.95rem;
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, color 0.15s;
-}
-
-.language-option:hover {
-  background: #505050;
-}
-
-.language-option[aria-pressed="true"] {
-  background: #383838;
-  color: #fff;
 }
 
 /* ─── 반응형 ─── */
@@ -133,13 +107,6 @@
 
   .order-elapsed {
     font-size: 0.85rem;
-  }
-
-  .language-option {
-    min-width: 67px;
-    min-height: 38px;
-    padding: 7px 10px;
-    font-size: 0.8rem;
   }
 
   .wordmark {

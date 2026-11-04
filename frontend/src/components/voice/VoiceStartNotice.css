@@ -1,0 +1,65 @@
+/* ─── VoiceStartNotice ───────────────────────────────────────────
+ *  화면 중앙의 큰 안내 문구: 잠깐 선명하게 보였다가 천천히 사라짐
+ *  화면 조작을 막지 않도록 pointer-events: none
+ * ──────────────────────────────────────────────────────────────── */
+
+.voice-start-notice {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    pointer-events: none;
+}
+
+.voice-start-notice p {
+    margin: 0;
+    padding: 28px 48px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 20px 60px rgba(24, 75, 193, 0.22);
+    color: var(--brand, #184bc1);
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: -1px;
+    text-align: center;
+    word-break: keep-all;
+    animation: voice-notice 3s ease-out forwards;
+}
+
+@keyframes voice-notice {
+    0% {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    10% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    40% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@media (max-width: 760px) {
+    .voice-start-notice p {
+        padding: 20px 26px;
+        font-size: 1.8rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .voice-start-notice p {
+        animation-name: voice-notice-reduced;
+    }
+    @keyframes voice-notice-reduced {
+        0%, 40% { opacity: 1; }
+        100% { opacity: 0; }
+    }
+}
