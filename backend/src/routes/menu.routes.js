@@ -1,48 +1,29 @@
 const express = require("express");
-const menus = require("../data/menus");
+const db = require("../db");
 
 const router = express.Router();
+const categories = ["coffee", "noncoffee", "frappe", "bakery"];
 
-// 전체 또는 카테고리별 메뉴 조회
-router.get("/", (req, res) => {
-  const category = req.query.category;
-
-  if (category === undefined) {
-    return res.status(200).json(menus);
+router.get("/", async (req, res) => {
+  const { category } = req.query;
+  if (category !== undefined && !categories.includes(category)) {
+    return res.status(400).json({ message: "지원하지 않는 카테고리입니다." });
   }
 
-  const allowedCategories = [
-    "coffee",
-    "noncoffee",
-    "frappe",
-    "bakery"
-  ];
-
-  if (!allowedCategories.includes(category)) {
-    return res.status(400).json({
-      message: "지원하지 않는 카테고리입니다."
-    });
-  }
-
-  const filteredMenus = menus.filter((menu) => {
-    return menu.category === category;
+  const menus = await db.menu.findMany({
+    where: category === undefined ? {} : { category },
+    orderBy: { id: "asc" }
   });
-
-  res.status(200).json(filteredMenus);
+  res.json(menus);
 });
 
-// 메뉴 하나 조회
-router.get("/:id", (req, res) => {
-  const menuId = Number(req.params.id);
-  const menu = menus.find((item) => item.id === menuId);
-
-  if (!menu) {
-    return res.status(404).json({
-      message: "메뉴를 찾을 수 없습니다."
-    });
-  }
-
-  res.status(200).json(menu);
+router.get("/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const menu = Number.isInteger(id) && id > 0 && id <= 2147483647
+    ? await db.menu.findUnique({ where: { id } })
+    : null;
+  if (!menu) return res.status(404).json({ message: "메뉴를 찾을 수 없습니다." });
+  res.json(menu);
 });
 
 module.exports = router;
