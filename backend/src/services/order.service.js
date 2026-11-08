@@ -1,4 +1,4 @@
-const menus = require("../data/menus");
+const defaultMenus = require("../data/menus");
 
 class OrderError extends Error {
   constructor(status, message) {
@@ -11,7 +11,7 @@ function invalid(message) {
   throw new OrderError(400, message);
 }
 
-function calculateItem(item) {
+function calculateItem(item, menus) {
   if (!item || typeof item !== "object" || Array.isArray(item)) {
     invalid("주문 항목은 객체여야 합니다.");
   }
@@ -54,12 +54,12 @@ function calculateItem(item) {
   };
 }
 
-function calculateOrder(body) {
+function calculateOrder(body, menus = defaultMenus) {
   if (!body || typeof body !== "object" || Array.isArray(body)) invalid("주문 데이터를 JSON 객체로 보내주세요.");
   if (!["DINE_IN", "TAKEOUT"].includes(body.orderType)) invalid("orderType은 DINE_IN 또는 TAKEOUT이어야 합니다.");
   if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 50) invalid("주문 항목은 1~50개여야 합니다.");
 
-  const items = body.items.map(calculateItem);
+  const items = body.items.map((item) => calculateItem(item, menus));
   return {
     orderType: body.orderType,
     items,
