@@ -15,6 +15,9 @@ from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from fastapi import FastAPI, HTTPException
+import uvicorn
+
 MENU_PATH = Path(__file__).with_name("menus.json")
 
 with open(MENU_PATH, "r", encoding="utf-8") as file:
@@ -218,6 +221,99 @@ class OrderAI:
         self.history = self.history[-8:]
         return result
 
+app = FastAPI(
+    title="Barrier-Free Kiosk AI API",
+    version="1.0.0"
+)
+
+# 사용자별 주문 세션
+sessions: dict[str, OrderAI] = {}
+
+
+class OrderRequest(BaseModel):
+    session_id: str
+    text: str
+
+
+def get_session(session_id: str) -> OrderAI:
+    """사용자별 AI 주문 인스턴스 관리"""
+
+    if not session_id or len(session_id) > 100:
+        raise HTTPException(
+            status_code=400,
+            detail="올바른 session_id가 필요합니다."
+        )
+
+    if session_id not in sessions:
+        try:
+            sessions[session_id] = OrderAI()
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"AI 초기화 실패: {str(e)}"
+            )
+
+    return sessions[session_id]
+
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "success",
+        "message": "AI 서버 연결 성공"
+    }
+
+
+@app.get("/ai/menu")
+def get_menu():
+    return {
+        "status": "success",
+        "menus": list(MENU.values())
+    }
+
+
+@app.post("/ai/order/text")
+def process_order(request: OrderRequest):
+
+    order = get_session(request.session_id)
+
+    result = order.handle_input(request.text)
+
+    return {
+        "status": "success",
+        "session_id": request.session_id,
+        "recognized_text": request.text,
+        "result": result
+    }
+
+
+@app.get("/ai/order/{session_id}")
+def get_order(session_id: str):
+
+    order = get_session(session_id)
+
+    return {
+        "status": "success",
+        "session_id": session_id,
+        "result": order.snapshot("현재 주문 상태")
+    }
+
+
+@app.delete("/ai/order/{session_id}")
+def reset_order(session_id: str):
+
+    if session_id not in sessions:
+        raise HTTPException(
+            status_code=404,
+            detail="주문 세션이 존재하지 않습니다."
+        )
+
+    del sessions[session_id]
+
+    return {
+        "status": "success",
+        "message": "주문 세션이 초기화되었습니다."
+    }
 
 def main():
     try:
