@@ -19,8 +19,15 @@ import { money, total } from "../menu/menuData"
  *   orderType  {string}    'DINE_IN' | 'TAKEOUT'
  *   onBack     {Function}  이전으로 () => void
  *   onPay      {Function}  결제 요청 (widgets) => void
+ *   busy       {boolean}   주문 요청 진행 중 여부 (버튼 비활성화)
  */
-function PaymentPage({ cart = [], orderType = "DINE_IN", onBack, onPay }) {
+function PaymentPage({
+    cart = [],
+    orderType = "DINE_IN",
+    onBack,
+    onPay,
+    busy = false,
+}) {
     const [widgets, setWidgets] = useState(null)
     const amount = total(cart)
 
@@ -44,6 +51,7 @@ function PaymentPage({ cart = [], orderType = "DINE_IN", onBack, onPay }) {
                     type="button"
                     className="checkout-back"
                     onClick={onBack}
+                    disabled={busy}
                     aria-label="메뉴 화면으로 돌아가기"
                 >
                     <svg
@@ -67,10 +75,11 @@ function PaymentPage({ cart = [], orderType = "DINE_IN", onBack, onPay }) {
                 <button
                     type="button"
                     className="toss-pay-button"
-                    disabled={!widgets}
+                    disabled={!widgets || busy}
+                    aria-busy={busy}
                     onClick={() => onPay?.(widgets)}
                 >
-                    {money(amount)} 결제하기
+                    {busy ? "주문 확인 중..." : `${money(amount)} 결제하기`}
                 </button>
             </footer>
         </main>

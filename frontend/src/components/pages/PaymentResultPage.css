@@ -1,0 +1,83 @@
+/* ─── PaymentResultPage (토스 결제 복귀) ─────────────────────────
+ *  완료 화면(.complete-*)의 레이아웃과 글자 크기를 그대로 사용합니다.
+ * ──────────────────────────────────────────────────────────────── */
+
+.payment-confirming {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px;
+    background: #f7fafd;
+    color: #263e59;
+    text-align: center;
+}
+
+.payment-confirming h1 {
+    font-size: 2.2rem;
+    line-height: 1.35;
+    letter-spacing: -1px;
+}
+
+.payment-confirming p {
+    font-size: 1.15rem;
+    color: #5b728a;
+}
+
+.payment-spinner {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 12px;
+    border: 7px solid #dce8f5;
+    border-top-color: #184bc1;
+    border-radius: 50%;
+    animation: payment-spin 0.9s linear infinite;
+}
+
+@keyframes payment-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .payment-spinner {
+        animation-duration: 3s;
+    }
+}
+
+.payment-result .payment-result-mark {
+    background: #fff0e6;
+    color: #c2560c;
+}
+
+.payment-result .complete-copy > .payment-result-help {
+    margin-top: 12px;
+    font-size: 1rem;
+}
+
+.payment-result-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.payment-result .complete-copy .secondary {
+    background: #edf3f8;
+    color: #315475;
+}
+
+.payment-result .complete-copy .secondary:hover {
+    background: #e3edf6;
+}
+
+@media (max-width: 760px) {
+    .payment-result-actions {
+        justify-content: center;
+    }
+}
