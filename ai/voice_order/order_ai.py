@@ -8,12 +8,13 @@
 
 import json
 import os
+from copy import deepcopy
 from pathlib import Path
 from typing import Literal, Optional
 
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, StrictInt, ValidationError
 
 import httpx
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -30,9 +31,13 @@ MENU = {
 
 class Operation(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    action: Literal["add", "remove", "set_quantity", "clear"]
+    action: Literal["add", "remove", "set_quantity", "update_options", "clear"]
     menu: Optional[str]
-    quantity: Optional[int]
+    quantity: Optional[StrictInt]
+    temperature: Optional[Literal["ICE", "HOT"]] = None
+    size: Optional[Literal["Regular", "Large"]] = None
+    shots: Optional[StrictInt] = None
+    line_id: Optional[StrictInt] = None
 
 
 class Interpretation(BaseModel):
@@ -41,6 +46,7 @@ class Interpretation(BaseModel):
     recommendations: list[str]
     edit_requested: bool
     clarification: Optional[str]
+    checkout: Literal["start", "cancel", "none"] = "none"
 
 
 INSTRUCTIONS = """
@@ -49,7 +55,10 @@ INSTRUCTIONS = """
 1. 특징/취향(달달한 것, 바삭한 디저트, 커피 말고 등)은 실제 조건과 제외 조건에
 맞는 메뉴를 최대 6개 recommendations에 넣는다. 범주를 지정하지 않았다면 음료와
 디저트를 함께 추천한다. 추천만으로 주문하지 않는다. 없으면 clarification에 설명한다.
-2. 메뉴 이름만 말해도 add, 수량 없으면 1이다. 복수 메뉴는 각각의 수량을 분리한다.
+2. 주문할 메뉴를 식별하면 add하고 발화에 있는 수량, 온도, 사이즈, 샷만 추출한다.
+명시되지 않은 수량, 온도, 사이즈, 샷은 null이다. 값을 임의로 기본값으로 채우지 않는다.
+정보가 일부 없어도 알려진 값으로 add를 반환한다. 누락된 옵션 질문은 프로그램이 한다.
+복수 메뉴는 각각 분리하고, 동일 메뉴라도 옵션이 다르면 각각 add한다.
 메뉴에 관한 질문/가격 문의는 주문하지 않는다. 없는 메뉴/모호한 별칭은 추측하지 말고 질문한다.
 '딸기라떼'는 '리얼 딸기 밀크', '크로와상'은 '버터 크루아상',
 '치즈케이크'는 '바스크 치즈케이크'로 해석한다. 초코케이크는 현재 메뉴에 없다.
@@ -61,11 +70,17 @@ INSTRUCTIONS = """
 교체 수량이 없으면 원래 주문 수량을 유지한다. 일부 교체는 그 수량만 remove/add한다.
 메뉴 수정/취소/추가/결제 중단 요청이면 edit_requested=true.
 '카드로 변경' 등 결제수단만 바꾸는 경우 edit_requested=false.
-5. 대상/수량이 불명확하거나 지원하지 않는 온도/사이즈 변경이면 clarification으로 질문하고
-operations=[]로 반환한다. 명시적으로 틀린 수량을 임의로 양수나 1로 고치지 않는다.
-모든 요청을 처리할 수 있을 때만 operations를 반환한다.
+5. 이전에 물은 옵션에 답하거나 기존 메뉴 옵션을 수정하면 update_options로 해당 값만 전달한다.
+대화 상태의 pending 질문에 대한 답은 해당 line_id에 연결한다. 다른 항목과 혼동하지 않는다.
+아이스/차갑게는 ICE, 핫/따뜻하게는 HOT, 보통/레귤러는 Regular, 큰 사이즈는 Large다.
+샷 추가 없음은 0, 한 샷 추가는 1, 두 샷 추가는 2다. 수량이 없는 주문은 null로 둔다.
+수정·취소 대상이 여러 개여서 특정할 수 없으면 clarification으로 질문하고 operations=[]로 반환한다.
+명시적으로 틀린 수량이나 샷을 임의로 올바른 값으로 고치지 않는다.
 6. '그거', '그걸로'는 최근 맥락으로 하나로 특정될 때만 처리한다.
-결제 완료를 주장하거나 금액을 생성하지 않는다. 일반 안내 문장은 생성하지 않는다.
+7. '결제하기', '계산해 주세요'는 checkout=start다. '결제 취소/중단'은 checkout=cancel이고
+장바구니를 지우지 않는다. 메뉴 취소는 remove, '전체 주문 취소'는 clear다.
+결제나 실제 주문을 직접 확정하지 않는다. 결제 완료를 주장하거나 금액을 생성하지 않는다.
+일반 안내 문장은 생성하지 않는다.
 """
 
 
@@ -76,77 +91,202 @@ class OrderAI:
             raise ValueError("voice_order/.env 또는 환경변수에 OPENAI_API_KEY를 설정해 주세요.")
         self.client = client or OpenAI(timeout=30, max_retries=1)
         self.model = model or os.getenv("OPENAI_MODEL", "gpt-6-luna")
-        self.cart: dict[str, int] = {}
+        self.cart: list[dict] = []
+        self.menus = MENU
+        self.catalog_source = "snapshot"
+        self.next_line_id = 1
+        self.awaiting_clarification = False
+        self.checkout_waiting = False
         self.screen = "menu"
         self.payment_method = None
         self.history = []
 
+    def _refresh_menus(self):
+        """Use the current backend catalog when configured; never hide a failed fetch."""
+        url = os.getenv("MENU_API_URL", "").strip()
+        if not url:
+            self.menus, self.catalog_source = MENU, "snapshot"
+            return
+        try:
+            response = httpx.get(url, timeout=5.0)
+            response.raise_for_status()
+            rows = response.json()
+            if not isinstance(rows, list) or not rows:
+                raise ValueError("invalid menu list")
+            catalog, ids = {}, set()
+            for menu in rows:
+                if (not isinstance(menu, dict) or type(menu.get("id")) is not int
+                    or menu["id"] < 1 or not isinstance(menu.get("name"), str)
+                    or not menu["name"].strip() or menu["name"] in catalog
+                    or menu["id"] in ids or menu.get("category") not in {"coffee", "noncoffee", "frappe", "bakery"}
+                    or not isinstance(menu.get("temperatures"), list)
+                    or any(t not in {"ICE", "HOT"} for t in menu["temperatures"])
+                    or type(menu.get("price")) is not int or menu["price"] < 0):
+                    raise ValueError("invalid menu")
+                catalog[menu["name"]] = menu
+                ids.add(menu["id"])
+        except (httpx.RequestError, httpx.HTTPStatusError, httpx.InvalidURL, ValueError, TypeError) as exc:
+            raise ValueError("백엔드 메뉴를 조회하지 못했어요. 다시 시도해 주세요.") from exc
+        self.menus, self.catalog_source = catalog, "backend"
+
+    def _pending(self):
+        for line in self.cart:
+            menu = self.menus.get(line["menu"])
+            if not menu:
+                return {"line_id": line["line_id"], "field": "menu", "question": "현재 판매 중인 메뉴를 다시 선택해 주세요."}
+            if line["quantity"] is None:
+                return {"line_id": line["line_id"], "field": "quantity", "question": f"{line['menu']}은 몇 개로 드릴까요?"}
+            temps = menu["temperatures"]
+            if temps and line["temperature"] not in temps:
+                if temps == ["ICE"]:
+                    question = "아이스로만 제공되는데 괜찮으세요?"
+                elif temps == ["HOT"]:
+                    question = "핫으로만 제공되는데 괜찮으세요?"
+                else:
+                    question = "아이스와 핫 중 어떤 걸로 드릴까요?"
+                return {"line_id": line["line_id"], "field": "temperature", "question": f"{line['menu']} {question}"}
+            if not temps and line["temperature"] is not None:
+                return {"line_id": line["line_id"], "field": "menu", "question": f"{line['menu']}의 온도 선택이 변경됐어요. 메뉴를 다시 확인해 주세요."}
+            if menu["category"] == "bakery" and line["size"] not in (None, "Regular"):
+                return {"line_id": line["line_id"], "field": "size", "question": f"{line['menu']}은 기본 사이즈만 가능해요. 변경할까요?"}
+            if menu["category"] != "coffee" and line["shots"] not in (None, 0):
+                return {"line_id": line["line_id"], "field": "shots", "question": f"{line['menu']}에는 샷을 추가할 수 없어요. 변경할까요?"}
+            if line["size"] is None:
+                return {"line_id": line["line_id"], "field": "size", "question": f"{line['menu']}은 보통과 큰 사이즈 중 어떤 걸로 드릴까요?"}
+            if line["shots"] is None:
+                return {"line_id": line["line_id"], "field": "shots", "question": f"{line['menu']}에 샷을 추가하시겠어요?"}
+        return None
+
     def snapshot(self, message, recommendations=(), error=None):
-        items = [
-            {"menu": name, "quantity": qty, "unit_price": MENU[name]["price"],
-             "amount": MENU[name]["price"] * qty}
-            for name, qty in self.cart.items()
-        ]
+        pending = self._pending()
+        cart = []
+        for line in self.cart:
+            menu = self.menus.get(line["menu"])
+            price = menu.get("price") if menu else None
+            cart.append({**line, "menuId": menu["id"] if menu else None, "base_price": price,
+                         "unit_price": None, "amount": None})
+        ready = bool(cart) and pending is None and not self.awaiting_clarification and error is None
+        items = [{"menuId": line["menuId"], "quantity": line["quantity"],
+                  "temperature": line["temperature"], "size": line["size"], "shots": line["shots"]}
+                 for line in cart] if ready else []
         return {
-            "screen": self.screen,  # menu / payment / card_payment / cash_payment
+            "screen": self.screen,
             "payment_method": self.payment_method,
-            "cart": items,
-            "total_amount": sum(item["amount"] for item in items),
+            "cart": cart,
+            "items": items,
+            "ready_for_quote": ready,
+            "needs_clarification": bool(pending or self.awaiting_clarification),
+            "checkout_pending": self.checkout_waiting,
+            "next_action": "error" if error else ("ask_clarification" if pending or self.awaiting_clarification else "continue"),
+            "pending": pending,
+            "catalog_source": self.catalog_source,
+            "total_amount": None,  # /orders/quote의 금액이 최종 기준
             "recommendations": [
-                {"menu": name, "price": MENU[name]["price"],
-                 "category": MENU[name]["category"]} for name in recommendations
+                {"menu": name, "price": self.menus[name]["price"],
+                 "category": self.menus[name]["category"]} for name in recommendations
             ],
             "message": message,
             "error": error,
         }
 
     def _apply(self, operations):
-        """모든 변경을 검증한 뒤 확정한다. 실패하면 기존 주문을 유지한다."""
-        candidate = self.cart.copy()
+        """Validate every requested change before replacing the current cart."""
+        candidate = deepcopy(self.cart)
+        next_line_id = self.next_line_id
+        pending = self._pending()
         for op in operations:
             if op.action == "clear":
                 candidate.clear()
                 continue
-            if op.menu not in MENU:
+            if op.menu is not None and op.menu not in self.menus and op.action != "remove":
                 raise ValueError("등록되지 않은 메뉴입니다. 메뉴 이름을 확인해 주세요.")
             qty = op.quantity
             if qty is not None and (type(qty) is not int or not 1 <= qty <= 99):
                 raise ValueError("수량은 1~99개로 말씀해 주세요.")
-            current = candidate.get(op.menu, 0)
+            if op.shots is not None and (type(op.shots) is not int or not 0 <= op.shots <= 2):
+                raise ValueError("샷은 0~2개까지 추가할 수 있어요.")
             if op.action == "add":
-                if qty is None:
-                    raise ValueError("추가할 수량을 말씀해 주세요.")
-                candidate[op.menu] = current + qty
-            elif op.action == "remove":
-                if not current:
-                    raise ValueError(f"현재 주문에 {op.menu}이(가) 없습니다.")
-                if qty is not None and qty > current:
-                    raise ValueError(f"{op.menu}은(는) 현재 {current}개입니다.")
-                remaining = current - (current if qty is None else qty)
-                if remaining:
-                    candidate[op.menu] = remaining
+                if op.menu is None:
+                    raise ValueError("추가할 메뉴를 말씀해 주세요.")
+                menu = self.menus[op.menu]
+                line = {"line_id": next_line_id, "menu": op.menu, "quantity": qty,
+                        "temperature": op.temperature,
+                        "size": "Regular" if menu["category"] == "bakery" and op.size is None else op.size,
+                        "shots": 0 if menu["category"] != "coffee" and op.shots is None else op.shots}
+                next_line_id += 1
+                candidate.append(line)
+            else:
+                matches = [line for line in candidate if (op.menu is None or line["menu"] == op.menu)
+                           and (op.line_id is None or line["line_id"] == op.line_id)]
+                if op.line_id is None and op.menu is None and pending:
+                    matches = [line for line in matches if line["line_id"] == pending["line_id"]]
+                if op.line_id is None and op.action == "update_options" and pending and len(matches) > 1:
+                    matches = [line for line in matches if line["line_id"] == pending["line_id"]]
+                if len(matches) > 1 and op.action == "remove":
+                    for field in ("temperature", "size", "shots"):
+                        value = getattr(op, field)
+                        if value is not None:
+                            matches = [line for line in matches if line[field] == value]
+                if not matches:
+                    raise ValueError("현재 주문에 해당 메뉴가 없습니다.")
+                if len(matches) != 1:
+                    raise ValueError("어떤 주문을 변경할지 메뉴와 옵션을 말씀해 주세요.")
+                line = matches[0]
+                if op.action == "remove":
+                    if qty is None:
+                        candidate.remove(line)
+                        continue
+                    if line["quantity"] is None or qty > line["quantity"]:
+                        raise ValueError("취소할 수량을 확인해 주세요.")
+                    line["quantity"] -= qty
+                    if not line["quantity"]:
+                        candidate.remove(line)
+                        continue
+                elif op.action == "set_quantity":
+                    if qty is None:
+                        raise ValueError("수정할 수량을 말씀해 주세요.")
+                    line["quantity"] = qty
+                elif op.action == "update_options":
+                    if all(getattr(op, field) is None for field in ("quantity", "temperature", "size", "shots")):
+                        raise ValueError("변경할 옵션이나 수량을 말씀해 주세요.")
+                    for field in ("quantity", "temperature", "size", "shots"):
+                        value = getattr(op, field)
+                        if value is not None:
+                            line[field] = value
                 else:
-                    del candidate[op.menu]
-            elif op.action == "set_quantity":
-                if not current or qty is None:
-                    raise ValueError("수정할 주문 메뉴와 최종 수량을 확인해 주세요.")
-                candidate[op.menu] = qty
-            if candidate.get(op.menu, 0) > 99:
-                raise ValueError("메뉴별 최대 주문 수량은 99개입니다.")
+                    raise ValueError("주문 변경 내용을 확인해 주세요.")
+            menu = self.menus.get(line["menu"])
+            if menu is None:
+                raise ValueError("현재 판매하지 않는 메뉴입니다. 해당 주문을 취소해 주세요.")
+            if line["temperature"] is not None and line["temperature"] not in menu["temperatures"]:
+                raise ValueError("해당 메뉴에서 선택할 수 없는 온도입니다.")
+            if line["size"] not in (None, "Regular", "Large") or (menu["category"] == "bakery" and line["size"] != "Regular"):
+                raise ValueError("해당 메뉴의 사이즈를 확인해 주세요.")
+            if menu["category"] != "coffee" and line["shots"] != 0:
+                raise ValueError("샷 추가는 커피 메뉴에서만 가능합니다.")
+            if len(candidate) > 50:
+                raise ValueError("주문 항목은 최대 50개까지 가능합니다.")
         self.cart = candidate
+        self.next_line_id = next_line_id
 
     def handle_input(self, text: str) -> dict:
         """STT 문자열 → AI 해석 → 검증된 주문 및 화면 전환 데이터."""
         if not isinstance(text, str) or not text.strip():
-            return self.snapshot("주문 내용을 말씀해 주세요.")
+            result = self.snapshot("주문 내용을 말씀해 주세요.")
+            result.update(needs_clarification=True, ready_for_quote=False, items=[], next_action="ask_clarification")
+            return result
         text = text.strip()
         if len(text) > 2000:
             return self.snapshot("주문을 짧게 나누어 말씀해 주세요.", error="input_too_long")
         try:
+            self._refresh_menus()
+        except ValueError as exc:
+            return self.snapshot(str(exc), error="menu_unavailable")
+        try:
             response = self.client.responses.parse(
                 model=self.model,
                 instructions=INSTRUCTIONS,
-                input=json.dumps({"menu": MENU, "state": self.snapshot(""),
+                input=json.dumps({"menu": self.menus, "state": self.snapshot(""),
                                   "recent_dialogue": self.history[-8:],
                                   "utterance": text}, ensure_ascii=False),
                 text_format=Interpretation,
@@ -176,6 +316,20 @@ class OrderAI:
             )
 
         normalized = "".join(text.split())
+        checkout = parsed.checkout
+        cancel_words = ("결제취소", "결제를취소", "결제중단", "결제하지마", "결제안할", "계산취소")
+        if any(word in normalized for word in cancel_words):
+            checkout = "cancel"
+        elif checkout == "none" and normalized.rstrip(".!?。") in ("결제하기", "결제해줘", "결제해주세요", "계산해줘", "계산해주세요"):
+            checkout = "start"
+        if checkout == "cancel":
+            self.checkout_waiting = False
+            self.screen, self.payment_method = "menu", None
+            # A payment cancellation must not be misread as clearing the cart.
+            if not any(word in normalized for word in ("전체주문취소", "주문전체취소", "주문을전부취소")):
+                parsed.operations = [operation for operation in parsed.operations if operation.action != "clear"]
+        elif checkout == "start":
+            self.checkout_waiting = bool(self.cart or any(operation.action == "add" for operation in parsed.operations))
         # 결제 중 수정 요청은 결제 키워드/수단보다 우선한다.
         edit_words = ("취소", "추가", "변경", "수정", "빼", "삭제", "바꿔", "그만", "중단")
         method_only = (not parsed.operations and not parsed.edit_requested
@@ -188,17 +342,27 @@ class OrderAI:
             self.screen, self.payment_method = "menu", None
 
         if parsed.clarification:
-            result = self.snapshot(parsed.clarification)
-        else:
+            self.awaiting_clarification = True
             try:
-                if any(name not in MENU for name in parsed.recommendations):
-                    raise ValueError("추천 메뉴를 확인하지 못했어요. 다시 말씀해 주세요.")
+                # Preserve known details even if the model also asks a follow-up.
                 self._apply(parsed.operations)
             except ValueError as exc:
                 result = self.snapshot(str(exc), error="invalid_order")
             else:
+                result = self.snapshot(parsed.clarification)
+            result.update(needs_clarification=True, ready_for_quote=False, items=[])
+        else:
+            try:
+                if any(name not in self.menus for name in parsed.recommendations):
+                    raise ValueError("추천 메뉴를 확인하지 못했어요. 다시 말씀해 주세요.")
+                self._apply(parsed.operations)
+            except ValueError as exc:
+                self.awaiting_clarification = True
+                result = self.snapshot(str(exc), error="invalid_order")
+                result["needs_clarification"] = True
+            else:
                 methods = [w for w in ("카드", "현금") if w in normalized]
-                payment_requested = any(w in normalized for w in ("결제", "계산")) or bool(methods)
+                payment_requested = checkout == "start" or (checkout != "cancel" and bool(methods))
                 message = "주문을 반영했어요." if parsed.operations else "주문 내용을 확인해 주세요."
                 if payment_requested and not (edit and (was_paying or not parsed.operations)):
                     if not self.cart:
@@ -211,12 +375,39 @@ class OrderAI:
                         self.payment_method = methods[0] if methods else self.payment_method
                         self.screen = {"카드": "card_payment", "현금": "cash_payment"}.get(
                             self.payment_method, "payment")
-                        message = "결제 수단을 선택해 주세요." if not self.payment_method else f"{self.payment_method} 결제 화면으로 이동합니다."
+                        message = "주문 내용을 확인해 주세요." if not self.payment_method else f"{self.payment_method} 결제 전에 주문 내용을 확인해 주세요."
                 elif edit and was_paying:
                     message = "메뉴 화면으로 돌아왔어요. 주문을 확인한 뒤 다시 결제해 주세요."
+                if checkout == "cancel":
+                    message = ("결제를 중단하고 주문 변경을 반영했어요." if parsed.operations
+                               else "결제 진행을 중단했어요. 주문은 유지됩니다.")
                 if parsed.recommendations:
                     message = "말씀하신 특징에 맞는 메뉴입니다. 원하는 메뉴를 말씀해 주세요."
+                pending = self._pending()
+                if pending:
+                    self.screen, self.payment_method = "menu", None
+                    message = pending["question"]
+                self.awaiting_clarification = bool(pending or (parsed.recommendations and not parsed.operations)
+                                                    or (not self.cart and not parsed.recommendations))
                 result = self.snapshot(message, dict.fromkeys(parsed.recommendations))
+                if not pending and parsed.recommendations and not parsed.operations:
+                    result.update(needs_clarification=True, ready_for_quote=False, items=[])
+                elif not pending and not self.cart and not parsed.recommendations:
+                    result.update(message="어떤 메뉴로 드릴까요?", needs_clarification=True)
+        if not self.cart:
+            self.checkout_waiting = False
+        if result.get("error"):
+            result["next_action"] = "error"
+        elif checkout == "cancel":
+            result["next_action"] = "cancel_checkout"
+        elif result["needs_clarification"]:
+            result["next_action"] = "ask_clarification"
+        elif self.checkout_waiting and result["ready_for_quote"]:
+            result["next_action"] = "request_quote"
+            self.checkout_waiting = False
+        else:
+            result["next_action"] = "continue"
+        result["checkout_pending"] = self.checkout_waiting
         self.history.extend([{"user": text}, {"result": result}])
         self.history = self.history[-8:]
         return result
@@ -290,7 +481,7 @@ def process_order(request: OrderRequest):
     result = order.handle_input(request.text)
 
     return {
-        "status": "success",
+        "status": "error" if result.get("error") else "success",
         "session_id": request.session_id,
         "recognized_text": request.text,
         "result": result

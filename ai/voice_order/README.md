@@ -102,12 +102,58 @@ STT 연결 오류는 502, 시간 초과는 504, 인식된 텍스트가 없으면
 
 사용자가 메뉴·옵션·금액을 최종 확인한 뒤 같은 형식으로 `POST /orders`에 보내면 백엔드가 다시 검증해 주문을 저장하고 성공 시 HTTP 201과 `orderId`를 반환한다. AI 결과를 실제 DB와 대조하지 않고 주문 확정에 사용하지 않는다.
 
-**현재 주문 분석 API는 위 형식의 `items`를 아직 반환하지 않는다.** 기존 `result.cart`는 메뉴명·수량 중심이며 온도, 사이즈, 샷, 메뉴 ID를 모두 관리하지 않는다. 프론트의 `orderType` 선택과 별개로, 백엔드 메뉴 API를 기준으로 AI의 주문 상태 및 누락 옵션 재질문을 구현하고 최종 응답을 `items` 형식으로 변환하는 작업이 필요하다. 평가용 `/ai/evaluate/text`의 `items`는 테스트 결과이며 주문 요청 형식이 아니다.
+`POST /ai/order/text`의 `result.items`는 필요한 메뉴·수량·온도·사이즈·샷이 모두 확인됐을 때 위의 항목 형식으로 반환된다. `result.ready_for_quote`가 `true`일 때만 사용한다. 정보가 부족하면 `items`는 빈 배열이며 `needs_clarification`, `pending`, `message`에 확인할 내용이 표시된다. 같은 `session_id`로 대답을 보내야 기존 정보가 유지된다. 동일 메뉴라도 옵션이 다르면 별도 항목이다. 베이커리는 백엔드 규칙에 따라 `size: "Regular"`, 비커피는 `shots: 0`, 온도가 없는 메뉴는 `temperature: null`이다.
+
+예를 들어 `POST /ai/order/text`에 다음을 보낸다.
+
+```json
+{"session_id":"order-123", "text":"아이스 아메리카노 두 잔 보통 사이즈 샷 추가 없이 결제할게요"}
+```
+
+요청이 정상 해석되면 응답의 핵심 값은 다음과 같다. 실제 모델 응답에 따라 질문이 먼저 나올 수 있다.
+
+```json
+{
+  "status": "success",
+  "session_id": "order-123",
+  "recognized_text": "아이스 아메리카노 두 잔 보통 사이즈 샷 추가 없이 결제할게요",
+  "result": {
+    "next_action": "request_quote",
+    "ready_for_quote": true,
+    "needs_clarification": false,
+    "items": [{"menuId": 1, "quantity": 2, "temperature": "ICE", "size": "Regular", "shots": 0}],
+    "message": "주문 내용을 확인해 주세요.",
+    "error": null
+  }
+}
+```
+
+### 음성 결제·취소 요청
+
+- `result.next_action: "ask_clarification"`: `message`를 안내하고 같은 세션으로 답변을 받는다.
+- `result.next_action: "request_quote"`: 사용자가 "결제하기" 또는 "계산해 주세요" 등을 말했고 주문 항목이 완성된 경우다. 백엔드 `/orders/quote`로 금액을 계산한 뒤 사용자에게 확인받는다. 이것만으로 주문이나 결제가 실행되지 않는다.
+- `result.next_action: "cancel_checkout"`: 결제 진행만 중단하고 메뉴 주문은 유지한다. 메뉴 취소나 전체 주문 취소는 별도 발화로 처리한다.
+- `result.next_action: "continue"`: 주문을 추가·수정했거나 다음 사용자 입력을 기다린다. `"error"`이면 `result.error`와 `message`를 확인한다.
+
+주문 옵션이 아직 누락된 상태에서 결제를 요청하면 `checkout_pending: true`로 기억하고 누락된 값을 다시 묻는다. 같은 세션에서 값을 모두 채우면 `request_quote`를 반환한다. 메뉴 취소는 대상을 확인한 뒤 해당 항목 또는 수량만 지우고, 동일 메뉴에 서로 다른 옵션이 있어 대상을 구별할 수 없으면 다시 묻는다. 세션 종료 시 `DELETE /ai/order/{session_id}`를 호출한다.
+
+매장/포장 `orderType`은 AI가 정하지 않고 프론트에서 붙인다. 최종 금액은 `/orders/quote`가 계산하므로 AI 응답의 `total_amount`는 `null`이다. 최종 사용자의 확인을 거쳐야 `/orders`로 접수한다. 평가용 `/ai/evaluate/text`의 `items`는 테스트 결과이며 주문 요청 형식이 아니다.
+
+운영 연동 시 주문 분석 서버에서 백엔드의 메뉴 API 주소를 설정한다. 같은 컴퓨터에서 백엔드가 3000번 포트로 실행될 때의 예시는 다음과 같다.
+
+```bash
+export MENU_API_URL=http://127.0.0.1:3000/menus
+python -m uvicorn voice_order.order_ai:app --host 127.0.0.1 --port 8000 --workers 1
+```
+
+Windows PowerShell에서는 `$env:MENU_API_URL = "http://127.0.0.1:3000/menus"`을 쓴다. 백엔드가 다른 컴퓨터에 있으면 AI 서버에서 접근 가능한 사설망 주소로 바꾼다. URL이 설정되면 매 발화마다 최신 메뉴를 조회하며 실패 시 오래된 메뉴로 대체하지 않는다. 설정하지 않으면 `menus.json` 스냅샷을 사용하고 `catalog_source: "snapshot"`으로 표시한다. 운영에서는 백엔드 메뉴를 사용하고 견적·확정 시 다시 검증한다.
+
+기존 `GET /ai/menu`는 `menus.json` 스냅샷을 반환한다. 최신 메뉴의 원본으로는 백엔드의 `GET /menus`를 사용한다. `POST /ai/order/text`는 오류 발생 시 HTTP 200이라도 `status: "error"`, `result.error`를 확인해야 한다.
 
 ## 현재 범위와 제한
 
 - 이 코드는 STT 결과와 기존 주문 분석을 연결한다. 프론트엔드 녹음/재질문 UI와 백엔드의 최종 주문 저장은 아직 연결하지 않았다.
-- 기존 `OrderAI`는 온도·사이즈를 완전히 처리하거나 명시적인 최종 주문 확정을 제공하지 않는다. 현재 응답을 결제 완료 또는 최종 주문 확정으로 해석하면 안 된다.
+- 주문 후보와 재질문을 제공하지만 사용자 최종 확인, 백엔드 `orderType` 결합 및 실제 주문 저장은 호출 측이 처리해야 한다. AI 응답을 결제 완료 또는 최종 주문 확정으로 해석하면 안 된다.
 - 세션은 주문 API 프로세스의 메모리에만 저장된다. 재시작하면 사라지며 여러 워커 간 공유되지 않는다. `--workers 1`을 사용하고 같은 세션의 요청은 한 번에 하나씩 전송해야 한다.
 - 현재 프론트엔드의 일반 API 요청 시간 제한은 10초다. STT 모델 초기화와 OpenAI 분석에는 더 오래 걸릴 수 있으므로, 실제 UI 연결 시 음성 주문용 시간 제한을 별도로 설정해야 한다.
 - STT 모델은 첫 요청에서 로드되며 처음에는 다운로드도 발생할 수 있다. 실제 대화 테스트 전에 모델을 준비하고 첫 요청의 대기 시간을 확인한다.

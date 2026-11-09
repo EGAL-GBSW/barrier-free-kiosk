@@ -26,10 +26,11 @@ def print_result(result):
     print("\n[현재 주문]")
     if result["cart"]:
         for item in result["cart"]:
-            print(f"- {item['menu']} {item['quantity']}개 ({item['amount']:,}원)")
+            quantity = f"{item['quantity']}개" if item['quantity'] is not None else '수량 미확인'
+            print(f"- {item['menu']} {quantity}")
     else:
         print("주문한 메뉴가 없습니다.")
-    print(f"\n총 금액: {result['total_amount']:,}원")
+    print("\n총 금액: 백엔드 주문 금액 확인 필요")
     print(f"현재 화면: {result['screen']}")
     print("====================================")
 
