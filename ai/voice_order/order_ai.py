@@ -1,6 +1,6 @@
 """AI 담당용 주문 인식 모듈. STT 결과 문자열을 handle_input()에 전달한다.
 
-실행: .venv/bin/python stt_test/order_ai.py
+실행: uvicorn voice_order.order_ai:app --host 127.0.0.1 --port 8000
 환경: 같은 폴더의 .env에 OPENAI_API_KEY=... (OPENAI_MODEL은 선택)
 화면은 구현하지 않으며 screen, cart, total_amount를 JSON으로 반환한다.
 세션(사용자)마다 OrderAI 인스턴스를 따로 생성해야 한다.
@@ -9,14 +9,14 @@
 import json
 import os
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from fastapi import FastAPI, HTTPException
-import uvicorn
+import httpx
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 
 MENU_PATH = Path(__file__).with_name("menus.json")
 
@@ -31,8 +31,8 @@ MENU = {
 class Operation(BaseModel):
     model_config = ConfigDict(extra="forbid")
     action: Literal["add", "remove", "set_quantity", "clear"]
-    menu: str | None
-    quantity: int | None
+    menu: Optional[str]
+    quantity: Optional[int]
 
 
 class Interpretation(BaseModel):
@@ -40,7 +40,7 @@ class Interpretation(BaseModel):
     operations: list[Operation]
     recommendations: list[str]
     edit_requested: bool
-    clarification: str | None
+    clarification: Optional[str]
 
 
 INSTRUCTIONS = """
@@ -73,7 +73,7 @@ class OrderAI:
     def __init__(self, client=None, model=None):
         load_dotenv(Path(__file__).with_name(".env"))
         if client is None and not os.getenv("OPENAI_API_KEY"):
-            raise ValueError("stt_test/.env에 OPENAI_API_KEY를 설정해 주세요.")
+            raise ValueError("voice_order/.env 또는 환경변수에 OPENAI_API_KEY를 설정해 주세요.")
         self.client = client or OpenAI(timeout=30, max_retries=1)
         self.model = model or os.getenv("OPENAI_MODEL", "gpt-6-luna")
         self.cart: dict[str, int] = {}
@@ -228,6 +228,9 @@ app = FastAPI(
 
 # 사용자별 주문 세션
 sessions: dict[str, OrderAI] = {}
+MAX_AUDIO_BYTES = 25 * 1024 * 1024
+SUPPORTED_AUDIO_SUFFIXES = {".wav", ".mp3", ".m4a", ".webm"}
+STT_TIMEOUT_SECONDS = 120.0
 
 
 class OrderRequest(BaseModel):
@@ -235,14 +238,21 @@ class OrderRequest(BaseModel):
     text: str
 
 
-def get_session(session_id: str) -> OrderAI:
-    """사용자별 AI 주문 인스턴스 관리"""
+class EvaluationRequest(BaseModel):
+    transcript: str
 
-    if not session_id or len(session_id) > 100:
+
+def validate_session_id(session_id: str) -> None:
+    if not session_id.strip() or len(session_id) > 100:
         raise HTTPException(
             status_code=400,
             detail="올바른 session_id가 필요합니다."
         )
+
+
+def get_session(session_id: str) -> OrderAI:
+    """사용자별 AI 주문 인스턴스 관리"""
+    validate_session_id(session_id)
 
     if session_id not in sessions:
         try:
@@ -284,6 +294,73 @@ def process_order(request: OrderRequest):
         "session_id": request.session_id,
         "recognized_text": request.text,
         "result": result
+    }
+
+
+@app.post("/ai/evaluate/text")
+def evaluate_text(request: EvaluationRequest):
+    """독립 발화의 평가용 판단을 반환하며 실제 주문 상태는 변경하지 않는다."""
+    # 선택 기능의 의존성은 요청이 있을 때만 불러온다.
+    from webspeech_eval.analyzer import analyze_transcript
+
+    try:
+        return {"analysis": analyze_transcript(request.transcript)}
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="평가할 인식 문장을 확인하세요.") from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="주문 분석 설정 또는 응답을 확인하세요.") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="주문 분석에 실패했습니다.") from exc
+
+
+@app.post("/ai/order/audio")
+def process_audio_order(session_id: str = Form(...), audio: UploadFile = File(...)):
+    """매 발화를 STT 서버로 보내고 같은 주문 세션에서 해석한다."""
+    # STT 실패 시 주문 세션을 새로 만들거나 기존 상태를 변경하지 않는다.
+    validate_session_id(session_id)
+    filename = Path(audio.filename or "").name
+    if Path(filename).suffix.lower() not in SUPPORTED_AUDIO_SUFFIXES:
+        raise HTTPException(status_code=415, detail="지원 음성 형식: wav, mp3, m4a, webm")
+
+    audio.file.seek(0, 2)
+    size = audio.file.tell()
+    audio.file.seek(0)
+    if not size:
+        raise HTTPException(status_code=422, detail="음성 파일이 비어 있습니다.")
+    if size > MAX_AUDIO_BYTES:
+        raise HTTPException(status_code=413, detail="음성 파일은 25 MiB 이하여야 합니다.")
+
+    stt_url = os.getenv("STT_API_URL", "http://127.0.0.1:8001/transcribe").strip()
+    if not stt_url:
+        raise HTTPException(status_code=503, detail="STT 서버 주소가 설정되지 않았습니다.")
+    try:
+        response = httpx.post(
+            stt_url,
+            files={"audio": (filename, audio.file, audio.content_type or "application/octet-stream")},
+            timeout=STT_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except httpx.TimeoutException as exc:
+        raise HTTPException(status_code=504, detail="STT 서버 응답 시간이 초과됐습니다.") from exc
+    except httpx.InvalidURL as exc:
+        raise HTTPException(status_code=503, detail="STT 서버 주소가 올바르지 않습니다.") from exc
+    except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail="STT 서버에서 음성 인식 결과를 받지 못했습니다.") from exc
+
+    transcript = payload.get("transcript") if isinstance(payload, dict) else None
+    if not isinstance(transcript, str):
+        raise HTTPException(status_code=502, detail="STT 서버 응답 형식이 올바르지 않습니다.")
+    transcript = transcript.strip()
+    if not transcript:
+        raise HTTPException(status_code=422, detail="인식된 음성이 없습니다. 다시 말씀해 주세요.")
+
+    result = get_session(session_id).handle_input(transcript)
+    return {
+        "status": "error" if result.get("error") else "success",
+        "session_id": session_id,
+        "recognized_text": transcript,
+        "result": result,
     }
 
 

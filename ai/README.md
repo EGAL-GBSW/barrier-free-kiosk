@@ -1,6 +1,10 @@
 # Barrier-Free Kiosk AI STT
 
-현재 AI 코드는 로컬 음성 파일을 한국어 텍스트로 변환하는 기존 `stt.py`, 별도 AI 서버의 HTTP 음성 업로드 API, 그리고 A4000에서 `medium`과 `large-v3`를 비교하는 도구로 구성됩니다. STT 뒤의 메뉴 검색·SLM 주문 후보 생성과 Backend 주문 확정은 아직 연결되지 않았습니다.
+STT API와 OpenAI 주문 분석 API를 연결해 같은 세션으로 재질문을 주고받는 방법은 [음성 주문 서버 연결](voice_order/README.md)을 참고하세요.
+
+저장된 음성 데이터로 Web Speech 인식과 OpenAI 주문 판단을 검토하려면 [Web Speech 평가 도구](webspeech_eval/README.md)를 참고하세요.
+
+AI 코드는 별도 STT 서버의 음성 업로드 API, OpenAI 주문 분석 API와 두 서버를 연결하는 음성 주문 API, 그리고 A4000에서 `medium`과 `large-v3`를 비교하는 도구를 포함합니다. SLM 연동과 Backend의 최종 주문 확정은 아직 연결되지 않았습니다.
 
 ## 설치
 
@@ -78,7 +82,7 @@ python validate_dataset.py --audio-dir audio --reference-csv dataset_references.
 A4000 서버에서 저장소를 클론하고 평가 도구를 설치합니다.
 
 ```bash
-git clone --branch feature/ai-stt --single-branch https://github.com/EGAL-GBSW/barrier-free-kiosk.git
+git clone https://github.com/EGAL-GBSW/barrier-free-kiosk.git
 cd barrier-free-kiosk/ai
 python3 -m venv .venv
 source .venv/bin/activate
@@ -117,15 +121,6 @@ python compare_pilot_models.py \
 ```bash
 python -m pip install -r requirements-dev.txt
 python -m unittest discover -s tests -v
-```
-
-## 기존 로컬 데모
-
-기존 `stt.py`는 수정하지 않았습니다. `ai/audio/stt_recoding2.m4a`를 읽는 고정 경로를 사용하며 `medium`을 CPU INT8로 실행합니다.
-
-```bash
-cd ai
-python stt.py
 ```
 
 가상환경, 테스트 음성, 개인 정보가 포함된 매니페스트는 Git에 추가하지 마세요. `.gitignore`에는 음성 확장자와 `.venv`가 이미 제외되어 있습니다.
