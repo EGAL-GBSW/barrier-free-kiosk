@@ -9,7 +9,7 @@ import { MENUS, money, unitPrice, optionsText } from "../menu/menuData"
  *   cart       {Array}   장바구니 항목 목록
  *   orderType  {string}  'DINE_IN' | 'TAKEOUT'
  */
-function PaymentRecap({ cart = [], orderType = "DINE_IN" }) {
+function PaymentRecap({ cart = [], orderType = "DINE_IN", demo }) {
     const itemCount = cart.reduce((n, line) => n + line.quantity, 0)
 
     return (
@@ -44,7 +44,7 @@ function PaymentRecap({ cart = [], orderType = "DINE_IN" }) {
                 })}
             </ul>
             <p className="checkout-order-note">
-                주문 내용을 확인한 뒤 결제 수단을 선택해 주세요.
+                {demo ? "메뉴와 옵션을 확인한 뒤 주문을 접수해 주세요." : "주문 내용을 확인한 뒤 결제 수단을 선택해 주세요."}
             </p>
         </section>
     )

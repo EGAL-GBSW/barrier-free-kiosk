@@ -27,6 +27,7 @@ function PaymentPage({
     onBack,
     onPay,
     busy = false,
+    demo = false,
 }) {
     const [widgets, setWidgets] = useState(null)
     const amount = total(cart)
@@ -35,15 +36,20 @@ function PaymentPage({
         <main id="main" className="toss-checkout kiosk-checkout">
             <header className="checkout-top">
                 <span className="checkout-brand">모그커피</span>
-                <h2>결제하기</h2>
-                <span className="checkout-test-tag">테스트 결제</span>
+                <h2>{demo ? "주문 확인" : "결제하기"}</h2>
+                <span className="checkout-test-tag">{demo ? "시연 주문" : "테스트 결제"}</span>
             </header>
 
-            <StepBar currentStep={4} isCheckoutOpen />
+            <StepBar currentStep={4} isCheckoutOpen demo={demo} />
 
             <div className="checkout-body">
-                <PaymentRecap cart={cart} orderType={orderType} />
-                <TossCheckout amount={amount} onReadyChange={setWidgets} />
+                <PaymentRecap cart={cart} orderType={orderType} demo={demo} />
+                {demo ? (
+                    <section className="checkout-methods" aria-label="시연 주문 안내">
+                        <h3>주문을 접수할까요?</h3>
+                        <p>시연 주문은 서버에 저장되며 결제는 진행되지 않습니다.</p>
+                    </section>
+                ) : <TossCheckout amount={amount} onReadyChange={setWidgets} />}
             </div>
 
             <footer className="checkout-bottom">
@@ -69,17 +75,17 @@ function PaymentPage({
                     <span>이전으로</span>
                 </button>
                 <div className="checkout-grand-total">
-                    <span>총 결제 금액</span>
+                    <span>{demo ? "총 주문 금액" : "총 결제 금액"}</span>
                     <strong>{money(amount)}</strong>
                 </div>
                 <button
                     type="button"
                     className="toss-pay-button"
-                    disabled={!widgets || busy}
+                    disabled={(!demo && !widgets) || busy || !cart.length}
                     aria-busy={busy}
                     onClick={() => onPay?.(widgets)}
                 >
-                    {busy ? "주문 확인 중..." : `${money(amount)} 결제하기`}
+                    {busy ? "주문 확인 중..." : `${money(amount)} ${demo ? "주문 접수" : "결제하기"}`}
                 </button>
             </footer>
         </main>

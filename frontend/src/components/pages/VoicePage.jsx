@@ -24,6 +24,10 @@ function VoicePage({
     onSelectProduct,
     onPageChange,
     speechStatus = "",
+    draft = "",
+    pendingQuote,
+    onConfirmQuote,
+    confirmingQuote,
 }) {
     return (
         <section className="voice-page-v2" aria-label="메뉴 화면">
@@ -43,9 +47,19 @@ function VoicePage({
                 />
             </div>
 
-            <p className="voice-inline-status" role="status" aria-live="polite">
-                {speechStatus}
-            </p>
+            <div className="voice-inline-status">
+                {draft && <p>음성 주문 내역: {draft}</p>}
+                <p role="status" aria-live="polite">{speechStatus}</p>
+                {pendingQuote && (
+                    <>
+                        {pendingQuote.message !== speechStatus && <p>{pendingQuote.message}</p>}
+                        <button type="button" className="button primary" onClick={onConfirmQuote}>
+                            주문 확정
+                        </button>
+                    </>
+                )}
+                {confirmingQuote && <p role="status">주문을 처리하고 있어요.</p>}
+            </div>
         </section>
     )
 }

@@ -1,4 +1,4 @@
-import { MENUS, money, unitPrice, optionsText } from "../menu/menuData"
+import { money } from "../menu/menuData"
 
 /**
  * Receipt (결제 내역 영수증)
@@ -9,37 +9,27 @@ import { MENUS, money, unitPrice, optionsText } from "../menu/menuData"
  */
 function Receipt({ receipt }) {
     return (
-        <section className="receipt" aria-label="결제 내역">
+        <section className="receipt" aria-label="주문 내역">
             <div className="receipt-brand">mog.</div>
-            <p>모그커피 테스트 결제 내역</p>
+            <p>{receipt.approved ? "모그커피 테스트 결제 내역" : "모그커피 시연 주문 내역"}</p>
             <div className="receipt-items">
-                {receipt.cart.map((line, idx) => {
-                    const m = MENUS.find((menu) => menu.id === line.id)
-                    if (!m) return null
-                    return (
-                        <div key={line.key || idx}>
-                            <span>
-                                {m.name}
-                                <small>
-                                    {optionsText(line)} · {line.quantity}개
-                                </small>
-                            </span>
-                            <strong>
-                                {money(unitPrice(m, line) * line.quantity)}
-                            </strong>
-                        </div>
-                    )
-                })}
+                {receipt.items.map((item, index) => (
+                    <div key={index}>
+                        <span>
+                            {item.menuName}
+                            <small>
+                                {[item.temperature, item.temperature && item.size, item.shots > 0 && `샷 ${item.shots} 추가`, `${item.quantity}개`].filter(Boolean).join(" · ")}
+                            </small>
+                        </span>
+                        <strong>{money(item.totalPrice)}</strong>
+                    </div>
+                ))}
             </div>
             <div className="receipt-total">
-                <span>총 결제 금액</span>
+                <span>{receipt.approved ? "총 결제 금액" : "총 주문 금액"}</span>
                 <strong>{money(receipt.total)}</strong>
             </div>
-            <p>
-                결제 수단 · {receipt.method || "테스트 결제"}
-                <br />
-                {receipt.approved ? "테스트 승인 완료" : "임시 완료 (승인 연동 전)"}
-            </p>
+            {receipt.approved && <p>토스 테스트 결제 승인 완료</p>}
         </section>
     )
 }

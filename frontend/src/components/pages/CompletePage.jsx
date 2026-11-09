@@ -30,15 +30,15 @@ function CompletePage({ receipt, onNewOrder }) {
                         <path d="m5 12 4 4L19 6" />
                     </svg>
                 </span>
-                <h1>결제가 완료되었어요.</h1>
+                <h1>{receipt.approved ? "결제가 완료되었어요." : "주문이 접수되었어요."}</h1>
                 <p>
                     {receipt.approved
                         ? "토스 테스트 결제 승인이 완료되었습니다."
-                        : "결제 승인 연동 전 임시 완료 화면입니다."}
+                        : "서버에 주문이 저장되었습니다."}
                 </p>
                 <div className="complete-order-number">
                     <span>주문 번호</span>
-                    <strong>{receipt.number}</strong>
+                    <strong style={{ overflowWrap: "anywhere", fontSize: "clamp(1rem, 3vw, 2rem)" }}>{receipt.number}</strong>
                 </div>
                 <div className="complete-meta">
                     <svg

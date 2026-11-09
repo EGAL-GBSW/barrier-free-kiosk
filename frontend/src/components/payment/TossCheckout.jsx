@@ -56,8 +56,8 @@ function TossCheckout({ amount, onReadyChange }) {
 
         const initialize = async () => {
             try {
-                if (!CLIENT_KEY) {
-                    throw new Error("결제 설정이 완료되지 않았어요. 직원에게 문의해 주세요.")
+                if (!CLIENT_KEY?.startsWith("test_")) {
+                    throw new Error("토스 테스트 클라이언트 키를 설정해 주세요.")
                 }
                 const TossPayments = await loadSDK()
                 if (disposed) return

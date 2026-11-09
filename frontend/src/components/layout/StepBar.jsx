@@ -28,7 +28,7 @@ const STEPS = [
   "결제 완료",
 ]
 
-function StepBar({ currentStep = 1, isCheckoutOpen = false }) {
+function StepBar({ currentStep = 1, isCheckoutOpen = false, demo = false }) {
   return (
     <nav
       className="order-stepbar"
@@ -64,7 +64,7 @@ function StepBar({ currentStep = 1, isCheckoutOpen = false }) {
                 step
               )}
             </span>
-            <span>{label}</span>
+            <span>{demo && idx === 3 ? "주문 접수" : demo && idx === 4 ? "접수 완료" : label}</span>
           </div>
         )
       })}
