@@ -6,6 +6,7 @@ const db = require("./db");
 const menuRoutes = require("./routes/menu.routes");
 const orderRoutes = require("./routes/order.routes");
 const paymentRoutes = require("./routes/payment.routes");
+const { createVoiceRouter } = require("./routes/voice.routes");
 const { OrderError } = require("./services/order.service");
 
 const app = express();
@@ -18,6 +19,7 @@ app.get("/health", (req, res) => {
 app.use("/menus", menuRoutes);
 app.use("/orders", orderRoutes);
 app.use("/payments", paymentRoutes);
+app.use("/voice", createVoiceRouter());
 
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);

@@ -55,10 +55,10 @@ export function toOrderPayload(orderType, cart) {
     }
 }
 
-export function createOrder(orderType, cart) {
+export function createOrder(orderType, cart, expectedAmount) {
     return request("/orders", {
         method: "POST",
-        body: toOrderPayload(orderType, cart),
+        body: { ...toOrderPayload(orderType, cart), expectedAmount },
     })
 }
 
@@ -71,6 +71,37 @@ export function createPaymentOrder(orderType, cart, expectedAmount) {
         method: "POST",
         body: { ...toOrderPayload(orderType, cart), expectedAmount },
     })
+}
+
+export function quoteVoiceOrder(orderType, cart) {
+    return request("/orders/quote", { method: "POST", body: toOrderPayload(orderType, cart) })
+}
+
+export async function closeVoiceSession(sessionId) {
+    if (BASE_URL) await fetch(`${BASE_URL}/voice/sessions/${sessionId}`, {
+        method: "DELETE", signal: AbortSignal.timeout(4000),
+    })
+}
+
+export async function analyzeVoice(sessionId, text, signal) {
+    if (!BASE_URL) throw new ApiError("백엔드 주소가 설정되지 않았어요.")
+    let response
+    try {
+        response = await fetch(`${BASE_URL}/voice/analyze`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_id: sessionId, text }),
+            signal: AbortSignal.any([signal, AbortSignal.timeout(70000)]),
+        })
+    } catch {
+        throw new ApiError("음성 분석 서버에 연결하지 못했어요.")
+    }
+    const data = await response.json().catch(() => null)
+    if (!response.ok) throw new ApiError(data?.message || "음성 주문을 분석하지 못했어요.", response.status)
+    if (data?.session_id !== sessionId || !Array.isArray(data.result?.items)) {
+        throw new ApiError("음성 주문 응답 형식이 올바르지 않아요.")
+    }
+    return data
 }
 
 /** 토스 승인을 거치므로 일반 요청보다 제한 시간을 길게 둡니다. */

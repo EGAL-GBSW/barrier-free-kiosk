@@ -15,6 +15,7 @@ import VoicePage from "../pages/VoicePage"
 import PaymentPage from "../pages/PaymentPage"
 import CompletePage from "../pages/CompletePage"
 import { useVoiceOrder } from "../voice/useVoiceOrder"
+import { useAiVoiceOrder } from "../voice/useAiVoiceOrder"
 import VoiceStartNotice from "../voice/VoiceStartNotice"
 import {
     MENUS,
@@ -24,6 +25,8 @@ import {
     optionsText,
     lineKey,
 } from "../menu/menuData"
+
+const useTeamAi = import.meta.env.VITE_VOICE_MODE === "ai"
 
 /**
  * AppLayout
@@ -212,11 +215,33 @@ function AppLayout({
     }
 
     // ── 음성 주문 Web Speech API 훅 연동 ──
-    const voiceOrder = useVoiceOrder({
+    const browserVoiceOrder = useVoiceOrder({
         currentPage: activePage,
         onAddToCart: handleAddToCart,
         onToast: showToast,
     })
+    const aiVoiceOrder = useAiVoiceOrder({
+        cart,
+        orderType,
+        onConfirmOrder: async (quote) => {
+            if (checkoutLock.current) throw new Error("이미 주문을 처리하고 있어요.")
+            if (onCheckout) {
+                setCart(quote.cart)
+                setCheckoutReturnPage(activePage)
+                setInternalPage("payment")
+                return
+            }
+            checkoutLock.current = true
+            try {
+                const order = await createOrder(quote.orderType, quote.cart, quote.amount)
+                setReceipt(toReceipt(order))
+                setInternalPage("complete")
+            } finally {
+                checkoutLock.current = false
+            }
+        },
+    })
+    const voiceOrder = useTeamAi ? aiVoiceOrder : browserVoiceOrder
 
     // 폰트 단계 및 카테고리에 따른 메뉴 필터링 및 페이징 계산
     const pageSize = font === 2 ? 2 : 6
@@ -237,9 +262,14 @@ function AppLayout({
     // 왼쪽 탭의 터치/음성 주문 전환
     // 음성 주문: 음성 인식 시작 + 화면 중앙에 "음성 주문이 시작되었습니다." 안내
     const handleOrderMode = (mode) => {
+        if (aiVoiceOrder.confirming) return
         setOrderMode(mode)
         if (mode === "touch") {
             voiceOrder.stopListening()
+            return
+        }
+        if (useTeamAi) {
+            voiceOrder.toggleListen()
             return
         }
         const supported =
@@ -286,7 +316,7 @@ function AppLayout({
 
     // 하단 "결제하기": 레퍼런스 openTossCheckout처럼 전체 화면 결제(주문 내역 + 결제 수단)로 이동
     const handleDockPay = () => {
-        if (!cart.length) return
+        if (!cart.length || checkoutLock.current) return
         voiceOrder.stopListening()
         setCheckoutReturnPage(activePage)
         setInternalPage("payment")
@@ -319,6 +349,7 @@ function AppLayout({
 
     // 헤더 "처음으로": 결제 완료 화면은 바로, 그 외 화면은 확인 팝업 후 초기화
     const handleHomeRequest = () => {
+        if (checkoutLock.current) return
         if (isComplete) {
             handleNewOrder()
             return
@@ -456,6 +487,10 @@ function AppLayout({
                     onSelectProduct={(p) => { voiceOrder.stopListening(); setSelectedProduct(p) }}
                     onPageChange={(p) => handlePageChange(p - 1)}
                     speechStatus={voiceOrder.speechStatus}
+                    draft={useTeamAi ? aiVoiceOrder.draft : ""}
+                    pendingQuote={useTeamAi ? aiVoiceOrder.pending : null}
+                    onConfirmQuote={aiVoiceOrder.confirmPending}
+                    confirmingQuote={aiVoiceOrder.confirming}
                 />
             )
         }
