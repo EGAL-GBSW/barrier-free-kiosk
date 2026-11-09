@@ -1,0 +1,7 @@
+# 주문 분석 API와 STT 연동용. GPU 추론 패키지는 STT 서버에만 설치한다.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+python-multipart>=0.0.9,<1
+httpx>=0.27,<1
+openai>=1.68,<3
+python-dotenv>=1,<2

@@ -1,3 +1,4 @@
 -r requirements.txt
+-r requirements-webspeech-eval.txt
 httpx==0.28.1
 openpyxl==3.1.5
