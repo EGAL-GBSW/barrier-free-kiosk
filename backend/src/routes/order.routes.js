@@ -7,7 +7,7 @@ const includeItems = { items: { orderBy: { id: "asc" } } };
 const uuid = /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 
 function publicOrder(order) {
-  const { id, items, ...details } = order;
+  const { id, items, paymentKey: _paymentKey, ...details } = order;
   return {
     orderId: id,
     ...details,

@@ -14,6 +14,8 @@ enum OrderType {
 
 enum OrderStatus {
   RECEIVED
+  PENDING_PAYMENT
+  PAID
 }
 
 model Menu {
@@ -35,6 +37,8 @@ model Order {
   totalPrice    Int
   currency      String
   createdAt     DateTime    @default(now())
+  paymentKey    String?     @unique
+  paidAt        DateTime?
   items         OrderItem[]
 }
 

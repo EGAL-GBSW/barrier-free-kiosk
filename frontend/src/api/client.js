@@ -1,4 +1,4 @@
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "")
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? "http://127.0.0.1:3000" : "")).replace(/\/+$/, "")
 const TIMEOUT_MS = 10000
 
 /**
@@ -64,6 +64,13 @@ export function createOrder(orderType, cart) {
 
 export function getOrder(orderId) {
     return request(`/orders/${encodeURIComponent(orderId)}`)
+}
+
+export function createPaymentOrder(orderType, cart, expectedAmount) {
+    return request("/payments/orders", {
+        method: "POST",
+        body: { ...toOrderPayload(orderType, cart), expectedAmount },
+    })
 }
 
 /** 토스 승인을 거치므로 일반 요청보다 제한 시간을 길게 둡니다. */

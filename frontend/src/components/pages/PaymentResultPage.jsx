@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import "./PaymentResultPage.css"
 import CompletePage from "./CompletePage"
 import { confirmPayment, getOrder } from "../../api/client"
-import { lineKey } from "../menu/menuData"
+import toReceipt from "../payment/toReceipt"
 
 function readReturnParams() {
     const params = new URLSearchParams(window.location.search)
@@ -36,24 +36,6 @@ function getReturnFailure({ isSuccess, paymentKey, orderId, amount, code, messag
     return null
 }
 
-function toReceipt(order) {
-    return {
-        number: order.orderId.slice(0, 8).toUpperCase(),
-        cart: order.items.map((item) => ({
-            id: item.menuId,
-            key: lineKey(item.menuId, item),
-            temperature: item.temperature || "",
-            size: item.size,
-            shots: item.shots,
-            quantity: item.quantity,
-        })),
-        total: order.totalPrice,
-        type: order.orderType,
-        method: "토스 테스트 결제",
-        approved: true,
-    }
-}
-
 /**
  * PaymentResultPage (토스 결제 인증 후 복귀 화면)
  * successUrl(/payment/success)로 돌아오면 서버에 승인을 요청하고 영수증을 표시합니다.
@@ -84,6 +66,7 @@ function PaymentResultPage({ onDone }) {
             try {
                 await confirmPayment({ paymentKey, orderId, amount })
                 const order = await getOrder(orderId)
+                if (order?.status !== "PAID") throw new Error("서버에 결제 완료 상태가 아직 기록되지 않았어요.")
                 setView({ status: "done", receipt: toReceipt(order) })
             } catch (error) {
                 // 4xx는 다시 요청해도 같은 결과입니다. 그 외에는 승인 여부를 알 수 없습니다.

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import "./AppLayout.css"
+import { createOrder } from "../../api/client"
+import toReceipt from "../payment/toReceipt"
 import KioskHeader from "./KioskHeader"
 import StepBar from "./StepBar"
 import Toast from "../common/Toast"
@@ -101,7 +103,7 @@ function AppLayout({
     const [receipt, setReceipt] = useState(null)
     const [checkoutBusy, setCheckoutBusy] = useState(false)
     const [checkoutError, setCheckoutError] = useState("")
-    const receiptSequence = useRef(0)
+    const checkoutLock = useRef(false)
     const [internalToast, setInternalToast] = useState({
         message: "",
         visible: false,
@@ -295,32 +297,24 @@ function AppLayout({
     }
 
     const handleCheckout = async (widgets) => {
-        if (checkoutBusy) return
-        if (onCheckout) {
-            setCheckoutBusy(true)
-            try {
+        if (checkoutLock.current || !cart.length) return
+        checkoutLock.current = true
+        setCheckoutBusy(true)
+        setCheckoutError("")
+        try {
+            if (onCheckout) {
                 await onCheckout({ cart, orderType, widgets })
-            } catch (error) {
-                setCheckoutError(
-                    error.message ||
-                        "주문을 처리하지 못했어요. 잠시 후 다시 시도해 주세요."
-                )
-            } finally {
-                setCheckoutBusy(false)
+            } else {
+                const order = await createOrder(orderType, cart)
+                setReceipt(toReceipt(order))
+                setInternalPage("complete")
             }
-            return
+        } catch (error) {
+            setCheckoutError(error.message || "주문을 처리하지 못했어요. 서버 상태를 확인해 주세요.")
+        } finally {
+            checkoutLock.current = false
+            setCheckoutBusy(false)
         }
-        // TODO: 백엔드 결제 승인(/payments/confirm) 연동 전까지 임시로 바로 결제 완료 처리
-        receiptSequence.current += 1
-        setReceipt({
-            number: String(receiptSequence.current).padStart(3, "0"),
-            cart: cart.map((line) => ({ ...line })),
-            total: total(cart),
-            type: orderType,
-            method: "테스트 결제",
-            approved: false,
-        })
-        setInternalPage("complete")
     }
 
     // 헤더 "처음으로": 결제 완료 화면은 바로, 그 외 화면은 확인 팝업 후 초기화
@@ -610,7 +604,7 @@ function AppLayout({
                 </div>
                 <div className="dock-payment-summary">
                     <div className="dock-amount">
-                        <span>총 결제 금액</span>
+                        <span>{onCheckout ? "총 결제 금액" : "총 주문 금액"}</span>
                         <strong aria-live="polite">{money(cartTotal)}</strong>
                     </div>
                     <button
@@ -641,7 +635,7 @@ function AppLayout({
                         <path d="M4 7V5l13-3v5M3 7h17v14H3V7Z" />
                         <path d="M16 12h6v5h-6a2.5 2.5 0 0 1 0-5Z" />
                     </svg>
-                    <span>결제하기</span>
+                    <span>{onCheckout ? "결제하기" : "주문 확인"}</span>
                 </button>
             </section>
         )
@@ -671,6 +665,7 @@ function AppLayout({
                     onBack={handleCheckoutBack}
                     onPay={handleCheckout}
                     busy={checkoutBusy}
+                    demo={!onCheckout}
                 />
             )}
 
@@ -685,6 +680,7 @@ function AppLayout({
                         onFont={onFont}
                     />
                     <StepBar
+                        demo={!onCheckout && !completeSlot}
                         currentStep={stepNumber}
                         isCheckoutOpen={isCheckoutOpen}
                     />
