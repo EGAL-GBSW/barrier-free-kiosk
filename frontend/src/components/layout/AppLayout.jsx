@@ -53,7 +53,8 @@ import {
  *   font             {number}    글자 크기 단계 (0=일반, 1=큰글씨, 2=최대)
  *   onFont           {Function}  글자 크기 변경 핸들러
  *   isCheckoutOpen   {boolean}   토스 결제 모달 오픈 여부 (StepBar 스타일 제어)
- *   onCheckout       {Function}  주문 확인 후 결제 진행 ({ cart, orderType }) => void
+ *   onCheckout       {Function}  주문 확인 후 결제 진행 ({ cart, orderType, widgets }) => Promise | void
+ *                                실패 시 error.message를 오류 안내 팝업으로 표시
  *   toast           {object}    { message: string, visible: boolean }
  *   overlay          {object}    { visible: boolean, onClose: Function, children: ReactNode }
  *   startSlot        {ReactNode} start 화면 커스텀 슬롯
@@ -98,6 +99,8 @@ function AppLayout({
     const [showHomeConfirm, setShowHomeConfirm] = useState(false)
     const [checkoutReturnPage, setCheckoutReturnPage] = useState("menu")
     const [receipt, setReceipt] = useState(null)
+    const [checkoutBusy, setCheckoutBusy] = useState(false)
+    const [checkoutError, setCheckoutError] = useState("")
     const receiptSequence = useRef(0)
     const [internalToast, setInternalToast] = useState({
         message: "",
@@ -291,9 +294,20 @@ function AppLayout({
         setInternalPage(checkoutReturnPage)
     }
 
-    const handleCheckout = (widgets) => {
+    const handleCheckout = async (widgets) => {
+        if (checkoutBusy) return
         if (onCheckout) {
-            onCheckout({ cart, orderType, widgets })
+            setCheckoutBusy(true)
+            try {
+                await onCheckout({ cart, orderType, widgets })
+            } catch (error) {
+                setCheckoutError(
+                    error.message ||
+                        "주문을 처리하지 못했어요. 잠시 후 다시 시도해 주세요."
+                )
+            } finally {
+                setCheckoutBusy(false)
+            }
             return
         }
         // TODO: 백엔드 결제 승인(/payments/confirm) 연동 전까지 임시로 바로 결제 완료 처리
@@ -656,6 +670,7 @@ function AppLayout({
                     orderType={orderType}
                     onBack={handleCheckoutBack}
                     onPay={handleCheckout}
+                    busy={checkoutBusy}
                 />
             )}
 
@@ -746,6 +761,16 @@ function AppLayout({
                 confirmLabel="처음으로"
                 onConfirm={handleNewOrder}
                 onCancel={() => setShowHomeConfirm(false)}
+            />
+
+            {/* ── 주문·결제 요청 오류 안내 ── */}
+            <ConfirmDialog
+                isOpen={Boolean(checkoutError)}
+                title="주문을 진행하지 못했어요"
+                description={checkoutError}
+                hideCancel
+                onConfirm={() => setCheckoutError("")}
+                onCancel={() => setCheckoutError("")}
             />
 
             {/* ── 전역 레이어 ── */}

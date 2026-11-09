@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react"
 
-// 토스페이먼츠 공개 문서용 TEST 클라이언트 키 (레퍼런스 ./frontend/toss-checkout.js와 동일)
-// 가맹점 시크릿이 아니며 실제 결제는 지원하지 않습니다.
-const CLIENT_KEY = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"
+const CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY
 const SDK_URL = "https://js.tosspayments.com/v2/standard"
 
 let sdkPromise
@@ -58,6 +56,9 @@ function TossCheckout({ amount, onReadyChange }) {
 
         const initialize = async () => {
             try {
+                if (!CLIENT_KEY) {
+                    throw new Error("결제 설정이 완료되지 않았어요. 직원에게 문의해 주세요.")
+                }
                 const TossPayments = await loadSDK()
                 if (disposed) return
                 const widgets = TossPayments(CLIENT_KEY).widgets({

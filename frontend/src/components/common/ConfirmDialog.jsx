@@ -12,6 +12,7 @@ import "./ConfirmDialog.css"
  *   confirmLabel  {string}    확인 버튼 문구 (기본: "확인")
  *   onConfirm     {Function}  확인 핸들러 () => void
  *   onCancel      {Function}  돌아가기 핸들러 () => void
+ *   hideCancel    {boolean}   돌아가기 버튼 숨김 (오류 안내처럼 확인만 필요한 경우)
  */
 function ConfirmDialog({
     isOpen = false,
@@ -20,6 +21,7 @@ function ConfirmDialog({
     confirmLabel = "확인",
     onConfirm,
     onCancel,
+    hideCancel = false,
 }) {
     if (!isOpen) return null
 
@@ -54,18 +56,21 @@ function ConfirmDialog({
                 <h2 id="confirm-dialog-title">{title}</h2>
                 {description && <p id="confirm-dialog-desc">{description}</p>}
                 <div className="dialog-actions">
-                    <button
-                        type="button"
-                        className="dialog-button secondary"
-                        onClick={onCancel}
-                        autoFocus
-                    >
-                        돌아가기
-                    </button>
+                    {!hideCancel && (
+                        <button
+                            type="button"
+                            className="dialog-button secondary"
+                            onClick={onCancel}
+                            autoFocus
+                        >
+                            돌아가기
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="dialog-button primary"
                         onClick={onConfirm}
+                        autoFocus={hideCancel}
                     >
                         {confirmLabel}
                     </button>
