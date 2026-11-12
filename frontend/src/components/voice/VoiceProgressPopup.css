@@ -1,0 +1,87 @@
+.voice-progress-popup {
+    position: fixed;
+    z-index: 90;
+    right: clamp(12px, 3vw, 48px);
+    bottom: clamp(12px, 3vw, 32px);
+    width: min(32rem, calc(100vw - 24px));
+    max-height: min(38rem, calc(100dvh - 24px));
+    overflow: auto;
+    box-sizing: border-box;
+    padding: clamp(16px, 2.5vw, 28px);
+    border: 2px solid #c7dcf5;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 12px 42px #102a5040;
+    color: #132c48;
+    overflow-wrap: anywhere;
+}
+
+.voice-progress-header,
+.voice-progress-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.voice-progress-eyebrow {
+    background: #eaf4ff;
+    color: #164d9a;
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-weight: 700;
+}
+
+.voice-progress-close {
+    background: #f0f5fb;
+    border: 1px solid #c5d4e6;
+    border-radius: 10px;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    padding: 8px 14px;
+    min-height: 44px;
+    cursor: pointer;
+}
+
+.voice-progress-popup h2 {
+    font-size: 1.4rem;
+    line-height: 1.3;
+    margin: 16px 0 8px;
+}
+
+.voice-progress-popup p {
+    margin: 6px 0;
+    line-height: 1.45;
+}
+
+.voice-progress-mic {
+    color: #0d5374;
+    font-weight: 700;
+}
+
+.voice-progress-mic > span {
+    display: inline-block;
+    width: 0.7em;
+    height: 0.7em;
+    border-radius: 50%;
+    background: #007e68;
+    margin-right: 5px;
+}
+
+.voice-progress-card {
+    margin: 14px 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #f1f6fb;
+}
+
+.voice-progress-popup .button {
+    margin-top: 10px;
+    min-height: 44px;
+}
+
+.voice-progress-actions strong {
+    font-size: 1.3rem;
+}

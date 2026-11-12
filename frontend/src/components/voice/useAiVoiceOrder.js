@@ -41,6 +41,8 @@ function mergeOrder(touchCart, aiItems) {
 export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
     const [listening, setListening] = useState(false)
     const [speechStatus, setSpeechStatus] = useState("")
+    const [phase, setPhase] = useState("idle")
+    const [transcript, setTranscript] = useState("")
     const [draft, setDraft] = useState("")
     const [pending, setPending] = useState(null)
     const [confirming, setConfirming] = useState(false)
@@ -56,6 +58,8 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
         setListening(false)
         setPending(null)
         setDraft("")
+        setPhase("idle")
+        setTranscript("")
         setSpeechStatus("")
     }, [])
 
@@ -72,6 +76,7 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
         if (quote.cartSignature !== JSON.stringify(context.current.cart) || quote.orderType !== context.current.orderType) {
             job.quote = null
             setPending(null)
+            setPhase("retry")
             setSpeechStatus("장바구니가 바뀌었어요. 다시 ‘결제해 주세요’라고 말씀해 주세요.")
             return
         }
@@ -91,7 +96,10 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
             job.committing = false
             if (jobRef.current === job) stopListening()
         } catch (error) {
-            if (jobRef.current === job) setSpeechStatus(error.message || "주문을 접수하지 못했어요.")
+            if (jobRef.current === job) {
+                setPhase("retry")
+                setSpeechStatus(error.message || "주문을 접수하지 못했어요.")
+            }
         } finally {
             job.committing = false
             setConfirming(false)
@@ -114,6 +122,7 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
         utterance.onerror = () => {
             if (jobRef.current !== job || job.utterance !== utterance) return
             job.utterance = null
+            setPhase("retry")
             setSpeechStatus(message + " 음성 주문 버튼을 눌러 답해 주세요.")
         }
         window.speechSynthesis.speak(utterance)
@@ -127,6 +136,8 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
         job.quote = null
         setPending(null)
         job.busy = true
+        setTranscript(text)
+        setPhase("analyzing")
         setSpeechStatus("AI가 주문을 확인하고 있어요.")
         let reply
         try {
@@ -147,13 +158,19 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
                 reply = `${menuText}. 총 ${money(quote.totalPrice)}입니다. 맞으면 ‘네, 주문할게요’라고 말씀해 주세요.`
                 job.quote = { cart: lines, cartSignature, orderType: current.orderType, amount: quote.totalPrice, message: reply }
                 setPending(job.quote)
+                setPhase("quote")
             } else if (result.next_action === "cancel_checkout") {
+                setPhase("reply")
                 reply = "결제 요청을 취소했어요. " + reply
             } else if (result.ready_for_quote && result.next_action === "continue") {
+                setPhase("reply")
                 reply += " 더 필요한 메뉴를 말씀하시거나 ‘결제해 주세요’라고 말씀해 주세요."
+            } else {
+                setPhase(result.next_action === "ask_clarification" ? "question" : "reply")
             }
         } catch (error) {
             reply = null
+            if (jobRef.current === job) setPhase("retry")
             if (jobRef.current === job) setSpeechStatus(error.message + " 음성 주문을 다시 누르거나 터치 주문을 이용해 주세요.")
         } finally {
             job.request = null
@@ -166,6 +183,7 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
         if (jobRef.current !== job || job.recognition || job.utterance || job.busy || job.committing) return
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
         if (!SpeechRecognition) {
+            setPhase("retry")
             setSpeechStatus("Chrome에서 열거나 터치 주문을 이용해 주세요.")
             return
         }
@@ -187,6 +205,7 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
                 if (jobRef.current !== job || job.recognition !== recognition) return
                 stopRecognition(job)
                 setListening(false)
+                setPhase("retry")
                 setSpeechStatus(event.error === "not-allowed"
                     ? "마이크 권한을 허용한 뒤 음성 주문을 다시 누르거나 터치 주문을 이용해 주세요."
                     : "음성을 인식하지 못했어요. 음성 주문을 다시 누르거나 터치 주문을 이용해 주세요.")
@@ -195,14 +214,19 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
                 if (jobRef.current !== job || job.recognition !== recognition) return
                 job.recognition = null
                 setListening(false)
+                setPhase("retry")
                 setSpeechStatus("들리지 않았어요. 음성 주문을 다시 누르거나 터치 주문을 이용해 주세요.")
             }
             recognition.start()
             setListening(true)
-            if (!keepMessage) setSpeechStatus("듣고 있어요. 주문을 말씀해 주세요.")
+            if (!keepMessage) {
+                setPhase(job.quote ? "quote" : "listening")
+                setSpeechStatus("듣고 있어요. 주문을 말씀해 주세요.")
+            }
         } catch {
             stopRecognition(job)
             setListening(false)
+            setPhase("retry")
             setSpeechStatus("마이크를 시작할 수 없어요. 권한을 확인하거나 터치 주문을 이용해 주세요.")
         }
     }
@@ -215,11 +239,12 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
         if (job.recognition) {
             stopRecognition(job)
             setListening(false)
+            setPhase("retry")
             setSpeechStatus("인식을 멈췄어요. 음성 주문을 누르면 이어서 말할 수 있어요.")
             return
         }
         listen(job)
     }
 
-    return { listening, speechStatus, draft, pending, confirming, toggleListen, stopListening, confirmPending }
+    return { listening, speechStatus, phase, transcript, draft, pending, confirming, toggleListen, stopListening, confirmPending }
 }

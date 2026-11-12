@@ -1,6 +1,7 @@
 import "./VoicePage.css"
 import ProductGrid from "../menu/ProductGrid"
 import MenuPagination from "../menu/MenuPagination"
+import VoiceProgressPopup from "../voice/VoiceProgressPopup"
 
 /**
  * VoicePage
@@ -28,6 +29,7 @@ function VoicePage({
     pendingQuote,
     onConfirmQuote,
     confirmingQuote,
+    voiceProgress,
 }) {
     return (
         <section className="voice-page-v2" aria-label="메뉴 화면">
@@ -47,19 +49,18 @@ function VoicePage({
                 />
             </div>
 
-            <div className="voice-inline-status">
-                {draft && <p>음성 주문 내역: {draft}</p>}
-                <p role="status" aria-live="polite">{speechStatus}</p>
-                {pendingQuote && (
-                    <>
-                        {pendingQuote.message !== speechStatus && <p>{pendingQuote.message}</p>}
-                        <button type="button" className="button primary" onClick={onConfirmQuote}>
-                            주문 확정
-                        </button>
-                    </>
-                )}
-                {confirmingQuote && <p role="status">주문을 처리하고 있어요.</p>}
-            </div>
+            {voiceProgress ? (
+                <VoiceProgressPopup
+                    {...voiceProgress}
+                    message={speechStatus}
+                    draft={draft}
+                    quote={pendingQuote}
+                    onConfirm={onConfirmQuote}
+                    confirming={confirmingQuote}
+                />
+            ) : (
+                <p className="voice-inline-status" role="status">{speechStatus}</p>
+            )}
         </section>
     )
 }
