@@ -491,6 +491,13 @@ function AppLayout({
                     pendingQuote={useTeamAi ? aiVoiceOrder.pending : null}
                     onConfirmQuote={aiVoiceOrder.confirmPending}
                     confirmingQuote={aiVoiceOrder.confirming}
+                    voiceProgress={useTeamAi ? {
+                        phase: aiVoiceOrder.phase,
+                        transcript: aiVoiceOrder.transcript,
+                        listening: aiVoiceOrder.listening,
+                        onRetry: aiVoiceOrder.toggleListen,
+                        onClose: () => handleOrderMode("touch"),
+                    } : null}
                 />
             )
         }
