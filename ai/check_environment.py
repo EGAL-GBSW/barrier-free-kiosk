@@ -20,7 +20,7 @@ def main() -> None:
         "platform": platform.platform(),
         "packages": {
             name: package_version(name)
-            for name in ("faster-whisper", "ctranslate2", "fastapi", "uvicorn")
+            for name in ("faster-whisper", "av", "ctranslate2", "fastapi", "uvicorn")
         },
         "nvidia_smi": None,
     }
