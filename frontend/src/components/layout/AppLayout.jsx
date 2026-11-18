@@ -139,9 +139,15 @@ function AppLayout({
     const STEP_BY_PAGE = { payment: 4, complete: 5 }
     const stepNumber = STEP_BY_PAGE[activePage] ?? currentStep
 
+    // 새 토스트를 띄우기 전에 이전 숨김 타이머를 취소해, 마지막 알림이 항상 2.5초간 보이도록 함
+    const toastTimer = useRef(null)
+    useEffect(() => () => clearTimeout(toastTimer.current), [])
+
     const showToast = (message) => {
+        clearTimeout(toastTimer.current)
         setInternalToast({ message, visible: true })
-        setTimeout(() => {
+        toastTimer.current = setTimeout(() => {
+            toastTimer.current = null
             setInternalToast({ message: "", visible: false })
         }, 2500)
     }

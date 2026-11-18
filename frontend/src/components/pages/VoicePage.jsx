@@ -59,7 +59,9 @@ function VoicePage({
                     confirming={confirmingQuote}
                 />
             ) : (
-                <p className="voice-inline-status" role="status">{speechStatus}</p>
+                <p className="voice-inline-status" role="status">
+                    {speechStatus}
+                </p>
             )}
         </section>
     )
