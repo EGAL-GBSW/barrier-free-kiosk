@@ -1,5 +1,6 @@
 import "./KioskHeader.css"
 import FontControl from "../common/FontControl"
+import ElapsedClock from "./ElapsedClock"
 
 /**
  * KioskHeader
@@ -12,14 +13,16 @@ import FontControl from "../common/FontControl"
  *
  * Props:
  *   onHome      {Function}  홈 버튼 클릭 핸들러
- *   elapsed     {string}    경과 시간 ("MM:SS")
+ *   elapsed     {string}    경과 시간 ("MM:SS"), 전달 시 고정 표시
+ *   startedAt   {number}    주문 시작 시각 (elapsed 미전달 시 이 시각부터 자동 카운트)
  *   showHome    {boolean}   홈 버튼 표시 여부 (기본값 true)
  *   font        {number}    글자 크기 단계 (0=일반, 1=큰글씨, 2=최대)
  *   onFont      {Function}  글자 크기 변경 핸들러
  */
 function KioskHeader({
   onHome,
-  elapsed = "00:00",
+  elapsed = "",
+  startedAt = null,
   showHome = true,
   font = 0,
   onFont,
@@ -55,13 +58,17 @@ function KioskHeader({
         </span>
       )}
 
-      {/* ── 중: 경과 시간 ── */}
-      <time
-        className="order-elapsed"
-        aria-label={`주문 경과 시간 ${elapsed || "00:00"}`}
-      >
-        {elapsed || "00:00"}
-      </time>
+      {/* ── 중: 경과 시간 (elapsed 미전달 시 ElapsedClock이 자체 카운트) ── */}
+      {elapsed ? (
+        <time
+          className="order-elapsed"
+          aria-label={`주문 경과 시간 ${elapsed}`}
+        >
+          {elapsed}
+        </time>
+      ) : (
+        <ElapsedClock startedAt={startedAt} />
+      )}
 
       {/* ── 우: 글자 크기 조절 ── */}
       <div className="header-tools">

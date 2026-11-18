@@ -132,23 +132,10 @@ function AppLayout({
         document.documentElement.dataset.screen = activePage
     }, [font, activePage])
 
-    // 경과 시간 자동 카운트
-    const [internalElapsed, setInternalElapsed] = useState("00:00")
-    useEffect(() => {
-        if (elapsed || isStart) return
+    // 경과 시간: 시작 시각만 보관하고, 매초 갱신은 헤더의 ElapsedClock이 담당
+    // (결제 화면에서 헤더가 사라졌다 돌아와도 같은 시작 시각 기준으로 이어서 표시)
+    const [orderStartedAt, setOrderStartedAt] = useState(null)
 
-        const startTime = Date.now()
-        const timer = setInterval(() => {
-            const seconds = Math.floor((Date.now() - startTime) / 1000)
-            const m = String(Math.floor(seconds / 60)).padStart(2, "0")
-            const s = String(seconds % 60).padStart(2, "0")
-            setInternalElapsed(`${m}:${s}`)
-        }, 1000)
-
-        return () => clearInterval(timer)
-    }, [isStart, elapsed])
-
-    const activeElapsed = elapsed || (isStart ? "00:00" : internalElapsed)
     const STEP_BY_PAGE = { payment: 4, complete: 5 }
     const stepNumber = STEP_BY_PAGE[activePage] ?? currentStep
 
@@ -374,12 +361,14 @@ function AppLayout({
     // 시작 화면 매장/포장 클릭 시 바로 메뉴 화면으로 이동 (음성 주문은 메뉴 화면에서 바로 사용)
     const handleBeginOrder = (type) => {
         setOrderType(type)
+        setOrderStartedAt(Date.now())
         setInternalPage("menu")
         onHome?.(type, "touch")
     }
 
     const handleHomeNavigation = () => {
         voiceOrder.stopListening()
+        setOrderStartedAt(null)
         setInternalPage("start")
         onHome?.("start")
     }
@@ -716,7 +705,8 @@ function AppLayout({
                 <>
                     <KioskHeader
                         onHome={handleHomeRequest}
-                        elapsed={activeElapsed}
+                        elapsed={elapsed}
+                        startedAt={orderStartedAt}
                         showHome={true}
                         font={font}
                         onFont={onFont}
