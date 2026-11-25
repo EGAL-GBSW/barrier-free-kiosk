@@ -1,4 +1,6 @@
 faster-whisper==1.2.1
+# faster-whisper 1.2.1 passes metadata_errors, which PyAV 19 removed.
+av==18.1.0
 ctranslate2==4.8.2
 fastapi==0.142.1
 uvicorn==0.54.0
