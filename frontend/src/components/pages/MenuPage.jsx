@@ -24,18 +24,17 @@ function MenuPage({
 }) {
     return (
         <section className="kiosk-catalogue">
-            <ProductGrid
-                products={products}
-                pageSize={pageSize}
-                onSelectProduct={onSelectProduct}
-            />
             <MenuPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPrev={() => onPageChange?.(currentPage - 1)}
-                onNext={() => onPageChange?.(currentPage + 1)}
                 onPageChange={onPageChange}
-            />
+            >
+                <ProductGrid
+                    products={products}
+                    pageSize={pageSize}
+                    onSelectProduct={onSelectProduct}
+                />
+            </MenuPagination>
         </section>
     )
 }

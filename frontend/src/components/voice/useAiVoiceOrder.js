@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { analyzeVoice, closeVoiceSession, quoteVoiceOrder } from "../../api/client"
 import { lineKey, MENUS, money } from "../menu/menuData"
+import { resolveRecommendation } from "../menu/recommendation"
 
 const isConfirmation = (text) =>
     /^(?:네|예|응|(?:네|예|응)?주문(?:할게요|해주세요|확정해주세요|확정할게요))$/.test(text.replace(/[\s,.!?]/g, ""))
@@ -38,7 +39,7 @@ function mergeOrder(touchCart, aiItems) {
     return [...merged.values()]
 }
 
-export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
+export function useAiVoiceOrder({ cart, orderType, onConfirmOrder, onRecommend }) {
     const [listening, setListening] = useState(false)
     const [speechStatus, setSpeechStatus] = useState("")
     const [phase, setPhase] = useState("idle")
@@ -47,8 +48,8 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
     const [pending, setPending] = useState(null)
     const [confirming, setConfirming] = useState(false)
     const jobRef = useRef(null)
-    const context = useRef({ cart, orderType, onConfirmOrder })
-    useEffect(() => { context.current = { cart, orderType, onConfirmOrder } }, [cart, orderType, onConfirmOrder])
+    const context = useRef({ cart, orderType, onConfirmOrder, onRecommend })
+    useEffect(() => { context.current = { cart, orderType, onConfirmOrder, onRecommend } }, [cart, orderType, onConfirmOrder, onRecommend])
 
     const stopListening = useCallback(() => {
         const job = jobRef.current
@@ -144,6 +145,13 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
             job.request = analyzeVoice(job.id, text, job.controller.signal)
             const { result } = await job.request
             if (jobRef.current !== job) return
+            // 추천: AI가 recommendations를 보내면 그대로, 아직 미지원이면 이번 발화로 주문이 바뀌지 않았을 때만 키워드 규칙 사용
+            const aiCartSignature = JSON.stringify(result.cart)
+            const recommendation = resolveRecommendation(result, text, {
+                allowLocal: aiCartSignature === (job.lastCartSignature ?? "[]"),
+            })
+            job.lastCartSignature = aiCartSignature
+            if (recommendation) context.current.onRecommend?.(recommendation)
             setDraft(result.cart.map((line) => `${line.menu} ${line.quantity}개`).join(", "))
             reply = result.message
             if (result.next_action === "request_quote" && result.ready_for_quote && result.items.length) {

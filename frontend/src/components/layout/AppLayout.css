@@ -13,10 +13,16 @@
   background: #f2f2f2;
 }
 
-/* ── workspace 그리드 ── */
+/* ── workspace 그리드 ──
+ *  [col 1] 메인 패널 | [col 2] 카테고리 레일(오른쪽, 폭 --rail)
+ *  --rail은 고정 위치 요소(음성 주문 팝업)가 레일을 가리지 않도록 함께 사용합니다. */
+:root {
+  --rail: 200px;
+}
+
 .workspace {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--rail);
   grid-template-rows: minmax(0, 1fr) var(--dock, 132px);
   height: calc(100dvh - var(--header, 132px));
   min-height: 530px;
@@ -27,20 +33,20 @@
   grid-template-rows: minmax(0, 1fr) 155px;
 }
 
-/* ── 카테고리 탭 열 (col 1, row 1) ── */
+/* ── 카테고리 탭 열 (col 2, row 1 — 오른쪽) ── */
 .workspace > .category-tabs,
 .workspace > .app-category,
 .category-tabs {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 1;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px 14px 16px 18px;
+  padding: 20px 18px 16px 14px;
   background: #f1f7fc;
-  border-right: 1px solid #dce7ef;
+  border-left: 1px solid #dce7ef;
   min-height: 0;
   /* 화면 높이가 부족하면 탭 열만 스크롤 (버튼이 하단 독에 가려지지 않도록) */
   overflow-x: hidden;
@@ -83,11 +89,11 @@
   border-color: var(--brand, #184bc1);
 }
 
-/* ── main 콘텐츠 패널 (col 2, row 1) ── */
+/* ── main 콘텐츠 패널 (col 1, row 1 — 왼쪽) ── */
 .main-panel,
 .workspace > .main-panel,
 .workspace > .app-main {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
   min-width: 0;
   min-height: 0;
@@ -105,15 +111,6 @@
   justify-content: space-between;
   min-height: 100%;
   box-sizing: border-box;
-}
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  align-content: start;
-  flex: 1;
-  min-height: 0;
 }
 
 .product-card {
@@ -178,39 +175,7 @@
   color: #263a4c;
 }
 
-.menu-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-  flex-shrink: 0;
-  margin-top: auto;
-  padding: 10px 0 6px;
-}
-
-.menu-pagination span {
-  color: #546779;
-  font-size: 1rem;
-}
-
-.page-button {
-  min-height: 44px;
-  min-width: 90px;
-  border: 1px solid #bdcede;
-  border-radius: 7px;
-  background: #fff;
-  font-size: 0.95rem;
-  font-weight: 650;
-  color: #315475;
-  cursor: pointer;
-}
-
-.page-button:disabled {
-  background: #eef2f5;
-  border-color: #e1e7ec;
-  color: #98a3ad;
-  cursor: not-allowed;
-}
+/* 이전/다음 버튼(.menu-stage, .page-button) 스타일은 MenuPagination.css에서 관리 */
 
 /* ── 하단 주문 독 (col 1/-1, row 2) ── */
 .compact-order-dock,
@@ -650,12 +615,8 @@
 
 /* ─── 반응형 ─── */
 @media (max-width: 1100px) {
-  .workspace {
-    grid-template-columns: 165px minmax(0, 1fr);
-  }
-
-  .product-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  :root {
+    --rail: 165px;
   }
 
   .compact-order-dock {
@@ -713,8 +674,11 @@
     object-position: 43% center;
   }
 
+  :root {
+    --rail: 110px;
+  }
+
   .workspace {
-    grid-template-columns: 110px minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) 126px;
     min-height: 640px;
   }
@@ -732,11 +696,6 @@
     padding: 8px;
     font-size: 0.82rem;
     min-height: 50px;
-  }
-
-  .product-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
   }
 
   .compact-order-dock {

@@ -2,17 +2,18 @@
  *  레퍼런스 ./frontend/app.js 및 ./frontend/kiosk.css 기준
  * ──────────────────────────────────────────────────────────────── */
 
+/* 메뉴 화면 오른쪽 레일 (workspace col 2) */
 .category-tabs {
-    grid-column: 1;
+    grid-column: 2;
     grid-row: 1;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     justify-content: space-between;
     gap: 16px;
-    padding: 20px 14px 16px 18px;
+    padding: 20px 18px 16px 14px;
     background: #f1f7fc;
-    border-right: 1px solid #dce7ef;
+    border-left: 1px solid #dce7ef;
     min-height: 0;
     overflow: hidden;
     box-sizing: border-box;
@@ -66,6 +67,42 @@
     color: #fff;
 }
 
+/* ── AI 추천 탭: 일반 카테고리와 같은 크기, 아이콘과 보라 계열 테두리로 구분 ── */
+.ai-recommend-tab {
+    width: 100%;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 17px;
+    border: 1px solid #c9c2ef;
+    border-radius: 8px;
+    background: #f6f4ff;
+    color: #4a3f9e;
+    font-size: 1.08rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.ai-recommend-tab svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.ai-recommend-tab:hover:not(.active) {
+    background: #ece8ff;
+    border-color: #6a5bd6;
+}
+
+.ai-recommend-tab.active {
+    background: #5b4bd1;
+    border-color: #5b4bd1;
+    color: #fff;
+}
+
 .category-tab-list {
     display: flex;
     flex-direction: column;
@@ -105,6 +142,7 @@
         gap: 12px;
     }
     .category-tab,
+    .ai-recommend-tab,
     .order-mode-button {
         font-size: 0.95rem;
         padding: 10px 12px;
@@ -121,16 +159,19 @@
         gap: 6px;
     }
     .category-tab,
+    .ai-recommend-tab,
     .order-mode-button {
         padding: 8px 6px;
         font-size: 0.82rem;
         min-height: 42px;
         text-align: center;
     }
+    .ai-recommend-tab,
     .order-mode-button {
         justify-content: center;
         gap: 4px;
     }
+    .ai-recommend-tab svg,
     .order-mode-button svg {
         width: 18px;
         height: 18px;

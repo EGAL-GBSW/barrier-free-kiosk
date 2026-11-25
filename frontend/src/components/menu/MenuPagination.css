@@ -1,43 +1,51 @@
 /* ─── MenuPagination ─────────────────────────────────────────────
- *  레퍼런스 ./frontend/kiosk.css 기준
+ *  [이전 버튼] [메뉴 그리드] [다음 버튼 + 페이지 표시]
+ *  버튼을 그리드 양옆 빈 공간에 두어, 아래로 스크롤하지 않아도 항상 보이게 합니다.
  * ──────────────────────────────────────────────────────────────── */
 
-.menu-pagination {
+.menu-stage {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 22px;
-    flex-shrink: 0;
-    margin-top: auto;
-    padding: 10px 0 8px;
+    gap: clamp(12px, 2vw, 32px);
+    flex: 1;
+    min-height: 0;
     width: 100%;
     box-sizing: border-box;
 }
 
-.menu-pagination span {
-    color: #546779;
-    font-size: 1rem;
-    min-width: 50px;
-    text-align: center;
+.menu-stage-content {
+    flex: 1;
+    min-width: 0;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-.menu-pagination strong {
-    color: #263a4c;
-    font-weight: 750;
+/* 양옆 버튼 열: 그리드 높이의 세로 가운데 */
+.menu-stage-side {
+    flex: 0 0 auto;
+    width: 88px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
 
+/* 세로로 긴 터치 버튼 (아이콘 위, 글자 아래) */
 .page-button {
-    min-height: 48px;
-    min-width: 100px;
-    padding: 0 16px;
+    width: 100%;
+    min-height: 132px;
+    padding: 14px 8px;
     border: 1px solid #bdcede;
-    border-radius: 7px;
+    border-radius: 14px;
     background: #fff;
     font-size: 1rem;
     font-weight: 650;
     color: #315475;
     cursor: pointer;
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 8px;
@@ -58,23 +66,55 @@
 }
 
 .page-button .icon {
-    width: 20px;
-    height: 20px;
+    width: 32px;
+    height: 32px;
+}
+
+.menu-page-indicator {
+    color: #546779;
+    font-size: 1rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.menu-page-indicator strong {
+    color: #263a4c;
+    font-weight: 750;
+}
+
+@media (max-width: 1100px) {
+    .menu-stage-side {
+        width: 72px;
+    }
+    .page-button {
+        min-height: 112px;
+    }
+    .page-button .icon {
+        width: 28px;
+        height: 28px;
+    }
 }
 
 @media (max-width: 760px) {
-    .menu-pagination {
-        gap: 12px;
-        padding: 6px 0 4px;
+    .menu-stage {
+        gap: 6px;
+    }
+    .menu-stage-side {
+        width: 48px;
+        gap: 6px;
     }
     .page-button {
-        min-height: 42px;
-        min-width: 80px;
-        padding: 0 10px;
-        font-size: 0.88rem;
+        min-height: 88px;
+        padding: 10px 4px;
+        border-radius: 10px;
+        font-size: 0.78rem;
+        gap: 4px;
     }
     .page-button .icon {
-        width: 16px;
-        height: 16px;
+        width: 20px;
+        height: 20px;
+    }
+    .menu-page-indicator {
+        font-size: 0.8rem;
     }
 }
