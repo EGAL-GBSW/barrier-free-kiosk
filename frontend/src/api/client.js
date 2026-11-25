@@ -1,3 +1,5 @@
+import { getLanguage, translate } from "../i18n/translate"
+
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? "http://127.0.0.1:3000" : "")).replace(/\/+$/, "")
 const TIMEOUT_MS = 10000
 
@@ -15,7 +17,7 @@ export class ApiError extends Error {
 
 export async function request(path, { method = "GET", body, timeoutMs = TIMEOUT_MS } = {}) {
     if (!BASE_URL) {
-        throw new ApiError("서버 주소가 설정되지 않았어요. 직원에게 문의해 주세요.")
+        throw new ApiError(translate(getLanguage(), "api.noBase"))
     }
 
     const hasBody = body !== undefined
@@ -28,13 +30,13 @@ export async function request(path, { method = "GET", body, timeoutMs = TIMEOUT_
             signal: AbortSignal.timeout(timeoutMs),
         })
     } catch {
-        throw new ApiError("서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.")
+        throw new ApiError(translate(getLanguage(), "api.network"))
     }
 
     const data = await response.json().catch(() => null)
     if (!response.ok) {
         throw new ApiError(
-            data?.message || "요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.",
+            data?.message || translate(getLanguage(), "api.failed"),
             response.status
         )
     }

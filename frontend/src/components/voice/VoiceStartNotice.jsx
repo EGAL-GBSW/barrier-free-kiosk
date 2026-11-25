@@ -1,4 +1,5 @@
 import "./VoiceStartNotice.css"
+import { useI18n } from "../../i18n/context"
 
 /**
  * VoiceStartNotice
@@ -9,10 +10,18 @@ import "./VoiceStartNotice.css"
  *   onDone  {Function}  애니메이션 종료 후 호출 () => void
  */
 function VoiceStartNotice({ onDone }) {
+    const { lang, t } = useI18n()
+
     return (
         <div className="voice-start-notice" aria-hidden="true">
             <p onAnimationEnd={onDone}>
-                음성 주문이 시작되었습니다. 원하시는 메뉴를 말씀해주세요.
+                {t("voice.started")}
+                {lang !== "ko" && (
+                    <>
+                        <br />
+                        {t("voice.koreanOnly")}
+                    </>
+                )}
             </p>
         </div>
     )

@@ -1,50 +1,43 @@
 import "./VoiceProgressPopup.css"
-import { money } from "../menu/menuData"
-
-const PHASE_LABEL = {
-    listening: "주문을 듣고 있어요",
-    analyzing: "주문을 확인하고 있어요",
-    question: "옵션을 확인해 주세요",
-    reply: "음성 주문 진행 중",
-    quote: "주문 금액을 확인해 주세요",
-    retry: "다시 말씀해 주세요",
-}
+import { useI18n } from "../../i18n/context"
 
 export default function VoiceProgressPopup({
     phase, transcript, message, listening, draft, quote, confirming, onRetry, onClose, onConfirm,
 }) {
+    const { lang, t, money } = useI18n()
     if (phase === "idle" && !confirming) return null
-    const title = confirming ? "주문 처리 중" : PHASE_LABEL[phase]
+    const title = t(confirming ? "voice.confirming" : `voice.phase.${phase}`)
 
     return (
-        <aside className="voice-progress-popup" aria-label="음성 주문 진행 상황">
+        <aside className="voice-progress-popup" aria-label={t("voice.popupAria")}>
             <header className="voice-progress-header">
-                <span className="voice-progress-eyebrow">음성 주문</span>
+                <span className="voice-progress-eyebrow">{t("orderMode.voice")}</span>
                 <button type="button" className="voice-progress-close" onClick={onClose} disabled={confirming}>
-                    닫기
+                    {t("common.close")}
                 </button>
             </header>
             <div role="status" aria-live="polite" aria-atomic="true">
                 <h2>{title}</h2>
+                {lang !== "ko" && <p className="voice-progress-note">{t("voice.koreanOnly")}</p>}
                 {message && !confirming && <p>{message}</p>}
                 {quote && quote.message !== message && <p>{quote.message}</p>}
-                {listening && <p className="voice-progress-mic"><span aria-hidden="true" /> 마이크 듣는 중</p>}
+                {listening && <p className="voice-progress-mic"><span aria-hidden="true" /> {t("voice.mic")}</p>}
             </div>
             {transcript && (
                 <div className="voice-progress-card">
-                    <strong>인식한 문장</strong>
+                    <strong>{t("voice.transcript")}</strong>
                     <p>“{transcript}”</p>
                 </div>
             )}
-            {draft && <p className="voice-progress-draft"><strong>음성 주문 내역</strong> {draft}</p>}
+            {draft && <p className="voice-progress-draft"><strong>{t("voice.draft")}</strong> {draft}</p>}
             {quote && (
                 <div className="voice-progress-actions">
-                    <strong>총 {money(quote.amount)}</strong>
-                    <button type="button" className="button primary" onClick={onConfirm}>주문 확정</button>
+                    <strong>{t("voice.total", { amount: money(quote.amount) })}</strong>
+                    <button type="button" className="button primary" onClick={onConfirm}>{t("voice.confirm")}</button>
                 </div>
             )}
             {phase === "retry" && !confirming && (
-                <button type="button" className="button primary" onClick={onRetry}>다시 말하기</button>
+                <button type="button" className="button primary" onClick={onRetry}>{t("voice.retry")}</button>
             )}
         </aside>
     )

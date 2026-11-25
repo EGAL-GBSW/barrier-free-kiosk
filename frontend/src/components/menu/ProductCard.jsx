@@ -1,4 +1,5 @@
 import "./ProductCard.css"
+import { useI18n } from "../../i18n/context"
 
 /**
  * ProductCard
@@ -9,9 +10,11 @@ import "./ProductCard.css"
  *   onSelect   {Function}  상품 클릭 핸들러 (product) => void
  */
 function ProductCard({ product, onSelect }) {
+    const i18n = useI18n()
     if (!product) return null
 
-    const { id = 1, name, price, badge } = product
+    const { id = 1, price, badge } = product
+    const { name } = i18n.menu(product)
     const tempText =
         product.temp ||
         (Array.isArray(product.temps)
@@ -19,15 +22,14 @@ function ProductCard({ product, onSelect }) {
                 ? "HOT / ICE"
                 : product.temps[0] || "BAKERY"
             : "")
-    const priceText =
-        typeof price === "number" ? `${price.toLocaleString()}원` : price
+    const priceText = i18n.money(price)
 
     return (
         <button
             type="button"
             className="product-card"
             onClick={() => onSelect?.(product)}
-            aria-label={`${name} ${priceText}, 옵션 선택`}
+            aria-label={i18n.t("product.cardAria", { name, price: priceText })}
         >
             <div className="product-visual">
                 <div

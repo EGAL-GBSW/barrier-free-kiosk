@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useI18n } from "../../i18n/context"
 
 const format = (seconds) => {
     const m = String(Math.floor(seconds / 60)).padStart(2, "0")
@@ -15,6 +16,7 @@ const format = (seconds) => {
  *   startedAt  {number|null}  주문 시작 시각 (Date.now()), 없으면 마운트 시각부터 카운트
  */
 function ElapsedClock({ startedAt }) {
+    const { t } = useI18n()
     const [now, setNow] = useState(() => Date.now())
     const [mountedAt] = useState(now)
 
@@ -27,7 +29,7 @@ function ElapsedClock({ startedAt }) {
     const text = format(seconds)
 
     return (
-        <time className="order-elapsed" aria-label={`주문 경과 시간 ${text}`}>
+        <time className="order-elapsed" aria-label={t("header.elapsed", { time: text })}>
             {text}
         </time>
     )

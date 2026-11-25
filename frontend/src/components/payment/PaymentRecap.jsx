@@ -1,4 +1,5 @@
-import { MENUS, money, unitPrice, optionsText } from "../menu/menuData"
+import { MENUS, unitPrice } from "../menu/menuData"
+import { useI18n } from "../../i18n/context"
 
 /**
  * PaymentRecap (주문 내역)
@@ -11,30 +12,33 @@ import { MENUS, money, unitPrice, optionsText } from "../menu/menuData"
  */
 function PaymentRecap({ cart = [], orderType = "DINE_IN", demo }) {
     const itemCount = cart.reduce((n, line) => n + line.quantity, 0)
+    const { t, money, menu, options } = useI18n()
 
     return (
-        <section className="checkout-order" aria-label="주문 내역">
+        <section className="checkout-order" aria-label={t("recap.title")}>
             <div className="checkout-section-title">
-                <h3>주문 내역</h3>
+                <h3>{t("recap.title")}</h3>
                 <span>
-                    {orderType === "DINE_IN" ? "매장" : "포장"} · {itemCount}개
+                    {t(orderType === "DINE_IN" ? "start.dineIn" : "start.takeout")} ·{" "}
+                    {t("recap.count", { n: itemCount })}
                 </span>
             </div>
             <ul className="checkout-items">
                 {cart.map((line, idx) => {
                     const m = MENUS.find((menu) => menu.id === line.id)
                     if (!m) return null
+                    const { name } = menu(m)
                     return (
                         <li key={line.key || idx} className="checkout-item">
                             <div
                                 className={`product-photo photo-${m.id}`}
                                 role="img"
-                                aria-label={m.name}
+                                aria-label={name}
                             />
                             <div>
-                                <h3>{m.name}</h3>
-                                <p>{optionsText(line)}</p>
-                                <span>수량 {line.quantity}개</span>
+                                <h3>{name}</h3>
+                                <p>{options(line)}</p>
+                                <span>{t("recap.quantity", { n: line.quantity })}</span>
                             </div>
                             <strong>
                                 {money(unitPrice(m, line) * line.quantity)}
@@ -44,7 +48,7 @@ function PaymentRecap({ cart = [], orderType = "DINE_IN", demo }) {
                 })}
             </ul>
             <p className="checkout-order-note">
-                {demo ? "메뉴와 옵션을 확인한 뒤 주문을 접수해 주세요." : "주문 내용을 확인한 뒤 결제 수단을 선택해 주세요."}
+                {t(demo ? "recap.noteDemo" : "recap.notePay")}
             </p>
         </section>
     )

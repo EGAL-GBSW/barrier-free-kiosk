@@ -1,4 +1,5 @@
 import "./StepBar.css"
+import { useI18n } from "../../i18n/context"
 
 /**
  * StepBar
@@ -20,23 +21,18 @@ import "./StepBar.css"
  *   currentStep    {number}   현재 활성 단계 (1~5)
  *   isCheckoutOpen {boolean}  토스 결제 모달 오픈 시 data-checkout-open 속성 활성화
  */
-const STEPS = [
-  "포장/매장 선택",
-  "메뉴 선택",
-  "주문 확인",
-  "결제하기",
-  "결제 완료",
-]
+const STEPS = [1, 2, 3, 4, 5]
 
 function StepBar({ currentStep = 1, isCheckoutOpen = false, demo = false }) {
+  const { t } = useI18n()
+
   return (
     <nav
       className="order-stepbar"
-      aria-label="주문 진행 단계"
+      aria-label={t("step.aria")}
       data-checkout-open={isCheckoutOpen ? "true" : undefined}
     >
-      {STEPS.map((label, idx) => {
-        const step = idx + 1
+      {STEPS.map((step) => {
         const isDone = step < currentStep
         const isActive = step === currentStep
 
@@ -64,7 +60,7 @@ function StepBar({ currentStep = 1, isCheckoutOpen = false, demo = false }) {
                 step
               )}
             </span>
-            <span>{demo && idx === 3 ? "주문 접수" : demo && idx === 4 ? "접수 완료" : label}</span>
+            <span>{t(demo && step >= 4 ? `step.demo${step}` : `step.${step}`)}</span>
           </div>
         )
       })}

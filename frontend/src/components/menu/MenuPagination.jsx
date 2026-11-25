@@ -1,4 +1,5 @@
 import "./MenuPagination.css"
+import { useI18n } from "../../i18n/context"
 
 /**
  * MenuPagination
@@ -18,6 +19,7 @@ function MenuPagination({
     onNext,
     onPageChange,
 }) {
+    const { t } = useI18n()
     const handlePrev = () => {
         if (currentPage > 1) {
             onPrev?.()
@@ -33,13 +35,13 @@ function MenuPagination({
     }
 
     return (
-        <nav className="menu-pagination" aria-label="메뉴 페이지">
+        <nav className="menu-pagination" aria-label={t("page.aria")}>
             <button
                 type="button"
                 className="page-button"
                 onClick={handlePrev}
                 disabled={currentPage <= 1}
-                aria-label="이전 페이지"
+                aria-label={t("page.prevAria")}
             >
                 <svg
                     className="icon"
@@ -53,7 +55,7 @@ function MenuPagination({
                 >
                     <path d="m14 6-6 6 6 6" />
                 </svg>
-                <span>이전</span>
+                <span>{t("page.prev")}</span>
             </button>
 
             <span aria-live="polite">
@@ -65,9 +67,9 @@ function MenuPagination({
                 className="page-button"
                 onClick={handleNext}
                 disabled={currentPage >= totalPages}
-                aria-label="다음 페이지"
+                aria-label={t("page.nextAria")}
             >
-                <span>다음</span>
+                <span>{t("page.next")}</span>
                 <svg
                     className="icon"
                     viewBox="0 0 24 24"

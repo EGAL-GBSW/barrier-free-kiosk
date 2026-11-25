@@ -1,4 +1,5 @@
 import "./ConfirmDialog.css"
+import { useI18n } from "../../i18n/context"
 
 /**
  * ConfirmDialog
@@ -18,11 +19,12 @@ function ConfirmDialog({
     isOpen = false,
     title,
     description,
-    confirmLabel = "확인",
+    confirmLabel,
     onConfirm,
     onCancel,
     hideCancel = false,
 }) {
+    const { t } = useI18n()
     if (!isOpen) return null
 
     return (
@@ -63,7 +65,7 @@ function ConfirmDialog({
                             onClick={onCancel}
                             autoFocus
                         >
-                            돌아가기
+                            {t("common.cancel")}
                         </button>
                     )}
                     <button
@@ -72,7 +74,7 @@ function ConfirmDialog({
                         onClick={onConfirm}
                         autoFocus={hideCancel}
                     >
-                        {confirmLabel}
+                        {confirmLabel ?? t("common.ok")}
                     </button>
                 </div>
             </div>

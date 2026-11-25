@@ -1,3 +1,5 @@
+import { translate } from "../../i18n/translate"
+
 /**
  * menuData.js
  * 레퍼런스 ./frontend/order.js 기반 전체 메뉴 및 카테고리 데이터
@@ -120,8 +122,80 @@ export const CATEGORIES = [
     { id: "bakery", label: "베이커리", icon: "cake" },
 ]
 
-export const money = (n) =>
-    typeof n === "number" ? `${n.toLocaleString("ko-KR")}원` : n
+/** 메뉴 이름·설명의 영어/일본어 번역 (한국어는 MENUS 원문 사용) */
+const MENU_I18N = {
+    1: {
+        en: { name: "Americano", description: "Deep, rich espresso with a clean finish." },
+        ja: { name: "アメリカーノ", description: "深く濃いエスプレッソ、すっきりとした余韻。" },
+    },
+    2: {
+        en: { name: "Vanilla Cream Latte", description: "Smooth vanilla cream meets espresso in a sweet blend." },
+        ja: { name: "バニラクリームラテ", description: "なめらかなバニラクリームとエスプレッソの甘い出会い。" },
+    },
+    3: {
+        en: { name: "Caffè Latte", description: "Rich espresso with smooth, nutty milk." },
+        ja: { name: "カフェラテ", description: "香ばしいミルクに豊かなエスプレッソを合わせました。" },
+    },
+    4: {
+        en: { name: "Jeju Matcha Latte", description: "Bold Jeju matcha with mellow, creamy milk." },
+        ja: { name: "済州抹茶ラテ", description: "済州抹茶の濃い風味とミルクのまろやかさ。" },
+    },
+    5: {
+        en: { name: "Real Strawberry Milk", description: "Packed with real strawberry pieces in every sip." },
+        ja: { name: "リアルいちごミルク", description: "ひと口ごとにぷちぷち、本物のいちご果肉がたっぷり。" },
+    },
+    6: {
+        en: { name: "Deep Chocolate Frappé", description: "Rich chocolate and sweet cream, served ice-cold." },
+        ja: { name: "ディープチョコフラッペ", description: "濃厚なチョコレートと甘いクリームを冷たく楽しめます。" },
+    },
+    7: {
+        en: { name: "Strawberry Cake", description: "Fluffy sponge layered with fresh cream and tangy strawberries." },
+        ja: { name: "生いちごケーキ", description: "ふわふわのスポンジに生クリームと甘酸っぱいいちご。" },
+    },
+    8: {
+        en: { name: "Butter Croissant", description: "Flaky layers with a rich buttery aroma." },
+        ja: { name: "バタークロワッサン", description: "幾重にもサクサク、豊かに広がるバターの香り。" },
+    },
+    9: {
+        en: { name: "Basque Cheesecake", description: "A deeply caramelized top over soft, rich cheese." },
+        ja: { name: "バスクチーズケーキ", description: "しっかり焼き上げた表面の中に、なめらかで濃厚なチーズ。" },
+    },
+}
+
+const ALLERGEN_I18N = {
+    없음: { en: "None", ja: "なし" },
+    우유: { en: "Milk", ja: "乳" },
+    대두: { en: "Soy", ja: "大豆" },
+    밀: { en: "Wheat", ja: "小麦" },
+    달걀: { en: "Egg", ja: "卵" },
+}
+
+export const findMenu = (id) => MENUS.find((m) => m.id === id)
+
+/** 메뉴의 이름·설명·알레르기 성분을 선택한 언어로 돌려줍니다. */
+export function localizeMenu(menu, lang = "ko") {
+    if (!menu) return { name: "", description: "", allergens: "" }
+    if (lang === "ko") {
+        return { name: menu.name, description: menu.description, allergens: menu.allergens }
+    }
+    const text = MENU_I18N[menu.id]?.[lang] || {}
+    return {
+        name: text.name ?? menu.name,
+        description: text.description ?? menu.description,
+        allergens: menu.allergens
+            ?.split(/,\s*/)
+            .map((a) => ALLERGEN_I18N[a]?.[lang] ?? a)
+            .join(", "),
+    }
+}
+
+/** 금액 표기: 한국어 "3,000원", 영어·일본어 "₩3,000" */
+export const money = (n, lang = "ko") => {
+    if (typeof n !== "number") return n
+    return lang === "ko"
+        ? `${n.toLocaleString("ko-KR")}원`
+        : `₩${n.toLocaleString("en-US")}`
+}
 
 export function defaults(menu) {
     return {
@@ -151,15 +225,15 @@ export function total(cart = []) {
     }, 0)
 }
 
-export function optionsText(line) {
+export function optionsText(line, lang = "ko") {
     const m = MENUS.find((m) => m.id === line.id)
     if (!m) return ""
     return m.category === "bakery"
-        ? "1조각 / 개"
+        ? translate(lang, "option.bakery")
         : [
               line.temperature,
               line.size,
-              line.shots ? `샷 ${line.shots} 추가` : null,
+              line.shots ? translate(lang, "option.shot", { n: line.shots }) : null,
           ]
               .filter(Boolean)
               .join(" · ")

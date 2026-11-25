@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { I18nContext, createI18n } from "./i18n/context"
 import "./App.css"
 import AppLayout from "./components/layout/AppLayout"
 import PaymentResultPage from "./components/pages/PaymentResultPage"
@@ -63,6 +64,7 @@ function App() {
         }
       }}
     />
+    </I18nContext.Provider>
   )
 }
 

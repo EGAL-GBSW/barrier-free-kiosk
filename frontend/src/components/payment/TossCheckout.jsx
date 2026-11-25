@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react"
+import { useI18n } from "../../i18n/context"
 
 const CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY
 const SDK_URL = "https://js.tosspayments.com/v2/standard"
+
+// 번역 키를 담은 오류: 화면에서 현재 언어로 보여줍니다.
+const keyedError = (i18nKey) => Object.assign(new Error(i18nKey), { i18nKey })
 
 let sdkPromise
 function loadSDK() {
@@ -14,21 +18,21 @@ function loadSDK() {
         const timer = setTimeout(() => {
             script.remove()
             sdkPromise = null
-            reject(new Error("결제 화면 연결이 지연되고 있어요. 다시 시도해 주세요."))
+            reject(keyedError("toss.sdkTimeout"))
         }, 20000)
         script.onload = () => {
             clearTimeout(timer)
             if (window.TossPayments) resolve(window.TossPayments)
             else {
                 sdkPromise = null
-                reject(new Error("결제 화면을 불러오지 못했어요."))
+                reject(keyedError("toss.sdkMissing"))
             }
         }
         script.onerror = () => {
             clearTimeout(timer)
             script.remove()
             sdkPromise = null
-            reject(new Error("토스페이먼츠에 연결할 수 없어요. 인터넷 연결을 확인해 주세요."))
+            reject(keyedError("toss.sdkNetwork"))
         }
         document.head.append(script)
     })
@@ -45,8 +49,10 @@ function loadSDK() {
  *   onReadyChange  {Function}  위젯 준비 상태 변경 (widgets | null) => void
  */
 function TossCheckout({ amount, onReadyChange }) {
-    const [status, setStatus] = useState("결제 화면을 불러오는 중입니다.")
-    const [failed, setFailed] = useState(false)
+    const { t } = useI18n()
+    // loading: 불러오는 중, ready: 준비 완료, Error 객체: 실패
+    const [status, setStatus] = useState("loading")
+    const failed = status instanceof Error
     const [attempt, setAttempt] = useState(0)
 
     useEffect(() => {
@@ -57,7 +63,7 @@ function TossCheckout({ amount, onReadyChange }) {
         const initialize = async () => {
             try {
                 if (!CLIENT_KEY?.startsWith("test_")) {
-                    throw new Error("토스 테스트 클라이언트 키를 설정해 주세요.")
+                    throw keyedError("toss.noKey")
                 }
                 const TossPayments = await loadSDK()
                 if (disposed) return
@@ -76,15 +82,11 @@ function TossCheckout({ amount, onReadyChange }) {
                     variantKey: "AGREEMENT",
                 })
                 if (disposed) return
-                setStatus("")
+                setStatus("ready")
                 onReadyChange?.(widgets)
             } catch (error) {
                 if (disposed) return
-                setStatus(
-                    error.message ||
-                        "결제 화면을 불러오지 못했어요. 다시 시도해 주세요."
-                )
-                setFailed(true)
+                setStatus(error instanceof Error ? error : new Error(String(error)))
             }
         }
         initialize()
@@ -98,31 +100,38 @@ function TossCheckout({ amount, onReadyChange }) {
     }, [amount, attempt, onReadyChange])
 
     const handleRetry = () => {
-        setFailed(false)
-        setStatus("결제 화면을 불러오는 중입니다.")
+        setStatus("loading")
         setAttempt((n) => n + 1)
     }
 
+    const statusText = failed
+        ? status.i18nKey
+            ? t(status.i18nKey)
+            : status.message || t("toss.loadFail")
+        : status === "loading"
+          ? t("toss.loading")
+          : ""
+
     return (
-        <section className="checkout-methods" aria-label="결제 수단 선택">
+        <section className="checkout-methods" aria-label={t("toss.aria")}>
             <div className="checkout-provider">
-                <span>안전한 결제</span>
+                <span>{t("toss.secure")}</span>
                 <strong>toss payments</strong>
             </div>
             <div id="toss-payment-method" />
             <div id="toss-agreement" />
-            {status && (
+            {statusText && (
                 <p className="toss-status" role="status">
-                    {status}
+                    {statusText}
                 </p>
             )}
             {failed && (
                 <button type="button" className="toss-retry" onClick={handleRetry}>
-                    다시 불러오기
+                    {t("toss.retry")}
                 </button>
             )}
             <p className="toss-test-note">
-                테스트 결제 · 실제 금액은 청구되지 않습니다.
+                {t("toss.note")}
             </p>
         </section>
     )
