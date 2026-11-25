@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { analyzeVoice, closeVoiceSession, quoteVoiceOrder } from "../../api/client"
-import { lineKey, MENUS, money } from "../menu/menuData"
+import { lineKey, MENUS } from "../menu/menuData"
+import { makeKoreanUtterance } from "./koreanSpeech"
 
 const isConfirmation = (text) =>
     /^(?:네|예|응|(?:네|예|응)?주문(?:할게요|해주세요|확정해주세요|확정할게요))$/.test(text.replace(/[\s,.!?]/g, ""))
@@ -109,10 +110,13 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
     function speakAndListen(job, message) {
         if (jobRef.current !== job) return
         setSpeechStatus(message)
-        if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return
         stopRecognition(job)
-        const utterance = new SpeechSynthesisUtterance(message)
-        utterance.lang = "ko-KR"
+        const utterance = makeKoreanUtterance(message, window.speechSynthesis, window.SpeechSynthesisUtterance)
+        if (!utterance) {
+            setPhase("retry")
+            setSpeechStatus(message + " 화면을 확인하고 다시 말하기를 눌러 주세요.")
+            return
+        }
         job.utterance = utterance
         utterance.onend = () => {
             if (jobRef.current !== job || job.utterance !== utterance) return
@@ -125,7 +129,13 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
             setPhase("retry")
             setSpeechStatus(message + " 음성 주문 버튼을 눌러 답해 주세요.")
         }
-        window.speechSynthesis.speak(utterance)
+        try {
+            window.speechSynthesis.speak(utterance)
+        } catch {
+            job.utterance = null
+            setPhase("retry")
+            setSpeechStatus(message + " 화면을 확인하고 다시 말하기를 눌러 주세요.")
+        }
     }
 
     async function processText(job, text) {
@@ -144,7 +154,8 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
             job.request = analyzeVoice(job.id, text, job.controller.signal)
             const { result } = await job.request
             if (jobRef.current !== job) return
-            setDraft(result.cart.map((line) => `${line.menu} ${line.quantity}개`).join(", "))
+            setDraft(result.cart.map((line) => line.quantity == null
+                ? `${line.menu} 수량 확인 중` : `${line.menu} ${line.quantity}개`).join(", "))
             reply = result.message
             if (result.next_action === "request_quote" && result.ready_for_quote && result.items.length) {
                 const current = context.current
@@ -152,10 +163,12 @@ export function useAiVoiceOrder({ cart, orderType, onConfirmOrder }) {
                 const lines = mergeOrder(current.cart, result.items)
                 const quote = await quoteVoiceOrder(current.orderType, lines)
                 if (jobRef.current !== job) return
-                const menuText = quote.items.map((item) =>
-                    [item.menuName, item.temperature, item.temperature && item.size, item.shots > 0 && `샷 ${item.shots}개 추가`, `${item.quantity}개`].filter(Boolean).join(" ")
-                ).join(", ")
-                reply = `${menuText}. 총 ${money(quote.totalPrice)}입니다. 맞으면 ‘네, 주문할게요’라고 말씀해 주세요.`
+                const menuText = quote.items.map((item) => {
+                    const temperature = { ICE: "아이스", HOT: "따뜻한" }[item.temperature]
+                    const size = item.temperature && { Regular: "보통 사이즈", Large: "큰 사이즈" }[item.size]
+                    return [temperature, item.menuName, size, item.shots > 0 && `샷 ${item.shots}개 추가`, `${item.quantity}개`].filter(Boolean).join(" ")
+                }).join(", ")
+                reply = `${menuText}. 총 ${new Intl.NumberFormat("ko-KR").format(quote.totalPrice)}원입니다. 맞으면 ‘네, 주문할게요’라고 말씀해 주세요.`
                 job.quote = { cart: lines, cartSignature, orderType: current.orderType, amount: quote.totalPrice, message: reply }
                 setPending(job.quote)
                 setPhase("quote")
