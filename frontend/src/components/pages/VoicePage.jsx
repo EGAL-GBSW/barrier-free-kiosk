@@ -2,6 +2,7 @@ import "./VoicePage.css"
 import ProductGrid from "../menu/ProductGrid"
 import MenuPagination from "../menu/MenuPagination"
 import VoiceProgressPopup from "../voice/VoiceProgressPopup"
+import { useI18n } from "../../i18n/context"
 
 /**
  * VoicePage
@@ -31,8 +32,10 @@ function VoicePage({
     confirmingQuote,
     voiceProgress,
 }) {
+    const { t } = useI18n()
+
     return (
-        <section className="voice-page-v2" aria-label="메뉴 화면">
+        <section className="voice-page-v2" aria-label={t("voice.pageAria")}>
             {/* 메뉴 카탈로그 (터치 메뉴와 동일) */}
             <div className="voice-catalogue">
                 <ProductGrid
@@ -59,7 +62,9 @@ function VoicePage({
                     confirming={confirmingQuote}
                 />
             ) : (
-                <p className="voice-inline-status" role="status">{speechStatus}</p>
+                <p className="voice-inline-status" role="status">
+                    {speechStatus}
+                </p>
             )}
         </section>
     )

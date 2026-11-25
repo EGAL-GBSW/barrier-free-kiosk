@@ -1,0 +1,43 @@
+/* ─── LanguageSelect ─────────────────────────────────────────────
+ *  글자 크기 조절(FontControl)과 같은 높이·테두리의 드롭다운
+ * ──────────────────────────────────────────────────────────────── */
+
+.language-select {
+  min-height: 50px;
+  min-width: 120px;
+  padding: 6px 40px 6px 14px;
+  border: 1px solid #d3e0eb;
+  border-radius: 10px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2353677b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px 18px;
+  color: #284b70;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.language-select:hover {
+  background-color: #e7f4ff;
+}
+
+.language-select:focus-visible {
+  outline: 3px solid var(--brand, #184bc1);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .language-select {
+    min-height: 44px;
+    min-width: 92px;
+    padding: 5px 30px 5px 10px;
+    background-position: right 8px center;
+    background-size: 14px 14px;
+    font-size: 0.75rem;
+  }
+}

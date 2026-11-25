@@ -1,5 +1,6 @@
 import "./CategoryTabs.css"
 import { CATEGORIES } from "./menuData"
+import { useI18n } from "../../i18n/context"
 
 /**
  * CategoryTabs
@@ -17,14 +18,12 @@ import { CATEGORIES } from "./menuData"
 const ORDER_MODES = [
     {
         id: "touch",
-        label: "터치 주문",
         icon: (
             <path d="M8 12V5a2 2 0 0 1 4 0v6l5 1a3 3 0 0 1 2 3l-1 5H9l-5-7a2 2 0 0 1 3-2l1 1Z" />
         ),
     },
     {
         id: "voice",
-        label: "음성 주문",
         icon: (
             <>
                 <rect x="9" y="2" width="6" height="13" rx="3" />
@@ -41,8 +40,10 @@ function CategoryTabs({
     orderMode = "touch",
     onOrderMode,
 }) {
+    const { t } = useI18n()
+
     return (
-        <nav className="category-tabs" aria-label="메뉴 카테고리">
+        <nav className="category-tabs" aria-label={t("category.aria")}>
             {/* ── 카테고리 탭 리스트 ── */}
             <div className="category-tab-list">
                 {categories.map((c) => {
@@ -59,14 +60,14 @@ function CategoryTabs({
                             aria-pressed={isActive}
                             onClick={() => onSelectCategory?.(c.id)}
                         >
-                            <span>{c.label}</span>
+                            <span>{t(`category.${c.id}`)}</span>
                         </button>
                     )
                 })}
             </div>
 
             {/* ── 주문 방식 (터치 / 음성): 카테고리와 글자 크기 조절 사이 빈 공간 ── */}
-            <div className="order-mode-toggle" role="group" aria-label="주문 방식">
+            <div className="order-mode-toggle" role="group" aria-label={t("orderMode.aria")}>
                 {ORDER_MODES.map((m) => {
                     const isActive = orderMode === m.id
                     return (
@@ -90,7 +91,7 @@ function CategoryTabs({
                             >
                                 {m.icon}
                             </svg>
-                            <span>{m.label}</span>
+                            <span>{t(`orderMode.${m.id}`)}</span>
                         </button>
                     )
                 })}

@@ -1,5 +1,6 @@
 import "./CompletePage.css"
 import Receipt from "../payment/Receipt"
+import { useI18n } from "../../i18n/context"
 
 /**
  * CompletePage (결제 완료 — 5단계)
@@ -11,6 +12,7 @@ import Receipt from "../payment/Receipt"
  *   onNewOrder  {Function}  새로운 주문 시작하기 () => void
  */
 function CompletePage({ receipt, onNewOrder }) {
+    const { t } = useI18n()
     if (!receipt) return null
     const isDineIn = receipt.type === "DINE_IN"
 
@@ -30,14 +32,12 @@ function CompletePage({ receipt, onNewOrder }) {
                         <path d="m5 12 4 4L19 6" />
                     </svg>
                 </span>
-                <h1>{receipt.approved ? "결제가 완료되었어요." : "주문이 접수되었어요."}</h1>
+                <h1>{t(receipt.approved ? "complete.approvedTitle" : "complete.placedTitle")}</h1>
                 <p>
-                    {receipt.approved
-                        ? "토스 테스트 결제 승인이 완료되었습니다."
-                        : "서버에 주문이 저장되었습니다."}
+                    {t(receipt.approved ? "complete.approvedDesc" : "complete.placedDesc")}
                 </p>
                 <div className="complete-order-number">
-                    <span>주문 번호</span>
+                    <span>{t("complete.number")}</span>
                     <strong style={{ overflowWrap: "anywhere", fontSize: "clamp(1rem, 3vw, 2rem)" }}>{receipt.number}</strong>
                 </div>
                 <div className="complete-meta">
@@ -59,9 +59,9 @@ function CompletePage({ receipt, onNewOrder }) {
                             }
                         />
                     </svg>
-                    {isDineIn ? "매장 이용" : "포장 주문"}
+                    {t(isDineIn ? "complete.dineIn" : "complete.takeout")}
                     <span>
-                        테스트 주문 · 실제 금액 청구 및 매장 접수는 진행되지 않습니다.
+                        {t("complete.testNote")}
                     </span>
                 </div>
                 <button
@@ -69,7 +69,7 @@ function CompletePage({ receipt, onNewOrder }) {
                     className="button primary"
                     onClick={onNewOrder}
                 >
-                    새로운 주문 시작하기
+                    {t("complete.newOrder")}
                     <svg
                         className="icon"
                         viewBox="0 0 24 24"

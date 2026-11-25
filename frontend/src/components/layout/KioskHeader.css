@@ -72,11 +72,18 @@
   text-align: center;
 }
 
-/* ── 우: 글자 크기 조절 ── */
+/* ── 우: 언어 선택 + 글자 크기 조절 ── */
 .header-tools {
   justify-self: end;
   display: flex;
   align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 760px) {
+  .header-tools {
+    gap: 6px;
+  }
 }
 
 /* ─── 반응형 ─── */

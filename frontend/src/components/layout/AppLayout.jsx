@@ -17,12 +17,11 @@ import CompletePage from "../pages/CompletePage"
 import { useVoiceOrder } from "../voice/useVoiceOrder"
 import { useAiVoiceOrder } from "../voice/useAiVoiceOrder"
 import VoiceStartNotice from "../voice/VoiceStartNotice"
+import { useI18n } from "../../i18n/context"
 import {
     MENUS,
     CATEGORIES,
-    money,
     total,
-    optionsText,
     lineKey,
 } from "../menu/menuData"
 
@@ -57,6 +56,8 @@ const useTeamAi = import.meta.env.VITE_VOICE_MODE === "ai"
  *   elapsed          {string}    경과 시간 "MM:SS" (생략 시 주문 시작 후 자동 카운트)
  *   font             {number}    글자 크기 단계 (0=일반, 1=큰글씨, 2=최대)
  *   onFont           {Function}  글자 크기 변경 핸들러
+ *   language         {string}    화면 언어 코드 ('ko'|'en'|'ja')
+ *   onLanguage       {Function}  언어 변경 핸들러
  *   isCheckoutOpen   {boolean}   토스 결제 모달 오픈 여부 (StepBar 스타일 제어)
  *   onCheckout       {Function}  주문 확인 후 결제 진행 ({ cart, orderType, widgets }) => Promise | void
  *                                실패 시 error.message를 오류 안내 팝업으로 표시
@@ -76,6 +77,8 @@ function AppLayout({
     elapsed = "",
     font = 0,
     onFont,
+    language = "ko",
+    onLanguage,
     isCheckoutOpen = false,
     onCheckout,
     toast: toastProps = { message: "", visible: false },
@@ -87,6 +90,8 @@ function AppLayout({
     completeSlot,
     children,
 }) {
+    const { t, money, menu, options: optionsText } = useI18n()
+
     // 모드 및 페이지 상태 관리
     const [pageOverride, setPageOverride] = useState(null)
     const [prevPropPage, setPrevPropPage] = useState(page)
@@ -132,29 +137,27 @@ function AppLayout({
         document.documentElement.dataset.screen = activePage
     }, [font, activePage])
 
-    // 경과 시간 자동 카운트
-    const [internalElapsed, setInternalElapsed] = useState("00:00")
+    // 화면 언어를 <html lang>에 반영 (스크린리더 발음·브라우저 음성 처리 기준)
     useEffect(() => {
-        if (elapsed || isStart) return
+        document.documentElement.lang = language
+    }, [language])
 
-        const startTime = Date.now()
-        const timer = setInterval(() => {
-            const seconds = Math.floor((Date.now() - startTime) / 1000)
-            const m = String(Math.floor(seconds / 60)).padStart(2, "0")
-            const s = String(seconds % 60).padStart(2, "0")
-            setInternalElapsed(`${m}:${s}`)
-        }, 1000)
+    // 경과 시간: 시작 시각만 보관하고, 매초 갱신은 헤더의 ElapsedClock이 담당
+    // (결제 화면에서 헤더가 사라졌다 돌아와도 같은 시작 시각 기준으로 이어서 표시)
+    const [orderStartedAt, setOrderStartedAt] = useState(null)
 
-        return () => clearInterval(timer)
-    }, [isStart, elapsed])
-
-    const activeElapsed = elapsed || (isStart ? "00:00" : internalElapsed)
     const STEP_BY_PAGE = { payment: 4, complete: 5 }
     const stepNumber = STEP_BY_PAGE[activePage] ?? currentStep
 
+    // 새 토스트를 띄우기 전에 이전 숨김 타이머를 취소해, 마지막 알림이 항상 2.5초간 보이도록 함
+    const toastTimer = useRef(null)
+    useEffect(() => () => clearTimeout(toastTimer.current), [])
+
     const showToast = (message) => {
+        clearTimeout(toastTimer.current)
         setInternalToast({ message, visible: true })
-        setTimeout(() => {
+        toastTimer.current = setTimeout(() => {
+            toastTimer.current = null
             setInternalToast({ message: "", visible: false })
         }, 2500)
     }
@@ -176,7 +179,7 @@ function AppLayout({
             }
             return [...prevCart, { ...options, id: product.id, key }]
         })
-        showToast(`${product.name} ${options.quantity}개를 담았어요.`)
+        showToast(t("toast.added", { name: menu(product).name, n: options.quantity }))
     }
 
     // 옵션 변경: 같은 옵션 항목이 있으면 합치고, 없으면 제자리에서 교체
@@ -199,7 +202,7 @@ function AppLayout({
             next[index] = { ...options, id: product.id, key }
             return next
         })
-        showToast(`${product.name} ${options.quantity}개로 변경했어요.`)
+        showToast(t("toast.changed", { name: menu(product).name, n: options.quantity }))
     }
 
     const openEditLine = (index) => {
@@ -224,7 +227,7 @@ function AppLayout({
         cart,
         orderType,
         onConfirmOrder: async (quote) => {
-            if (checkoutLock.current) throw new Error("이미 주문을 처리하고 있어요.")
+            if (checkoutLock.current) throw new Error(t("dialog.alreadyProcessing"))
             if (onCheckout) {
                 setCart(quote.cart)
                 setCheckoutReturnPage(activePage)
@@ -291,7 +294,7 @@ function AppLayout({
         setCart((prev) => {
             const item = prev[index]
             const m = MENUS.find((menu) => menu.id === item?.id)
-            if (m) showToast(`${m.name}를 삭제했어요.`)
+            if (m) showToast(t("toast.removed", { name: menu(m).name }))
             return prev.filter((_, i) => i !== index)
         })
     }
@@ -311,7 +314,7 @@ function AppLayout({
     const handleClearCart = () => {
         setShowClearConfirm(false)
         setCart([])
-        showToast("선택한 메뉴를 모두 취소했어요.")
+        showToast(t("toast.cleared"))
     }
 
     // 하단 "결제하기": 레퍼런스 openTossCheckout처럼 전체 화면 결제(주문 내역 + 결제 수단)로 이동
@@ -340,7 +343,7 @@ function AppLayout({
                 setInternalPage("complete")
             }
         } catch (error) {
-            setCheckoutError(error.message || "주문을 처리하지 못했어요. 서버 상태를 확인해 주세요.")
+            setCheckoutError(error.message || t("dialog.errorFallback"))
         } finally {
             checkoutLock.current = false
             setCheckoutBusy(false)
@@ -374,12 +377,14 @@ function AppLayout({
     // 시작 화면 매장/포장 클릭 시 바로 메뉴 화면으로 이동 (음성 주문은 메뉴 화면에서 바로 사용)
     const handleBeginOrder = (type) => {
         setOrderType(type)
+        setOrderStartedAt(Date.now())
         setInternalPage("menu")
         onHome?.(type, "touch")
     }
 
     const handleHomeNavigation = () => {
         voiceOrder.stopListening()
+        setOrderStartedAt(null)
         setInternalPage("start")
         onHome?.("start")
     }
@@ -389,27 +394,28 @@ function AppLayout({
         <main id="main" className="kiosk-start">
             <section
                 className="kiosk-promo photo-only-promo"
-                aria-label="모그커피 음료"
+                aria-label={t("start.promoAria")}
             >
                 <img
                     className="start-editorial-photo"
                     src="/StartPage.png"
-                    alt="하늘색 배경 위 커다란 아이스 아메리카노"
+                    alt={t("start.photoAlt")}
                 />
                 <div className="start-campaign-copy">
-                    <p>모그커피와 함께</p>
+                    <p>{t("start.lead")}</p>
                     <h1>
-                        시원하게
-                        <br />한 모금!
+                        {t("start.title1")}
+                        <br />
+                        {t("start.title2")}
                     </h1>
                 </div>
             </section>
-            <section className="kiosk-entry" aria-label="주문 시작">
+            <section className="kiosk-entry" aria-label={t("start.entryAria")}>
                 <div className="entry-logo">
                     <span className="wordmark">
                         mog<span className="brand-dot">.</span>
                     </span>
-                    <span>모그커피</span>
+                    <span>{t("start.brand")}</span>
                 </div>
                 <div className="kiosk-type-options">
                     <button
@@ -431,8 +437,8 @@ function AppLayout({
                         >
                             <path d="M4 8h12v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Zm12 1h2a3 3 0 0 1 0 6h-2M7 3v2m5-2v2" />
                         </svg>
-                        <strong>매장</strong>
-                        <span>매장에서 드시기</span>
+                        <strong>{t("start.dineIn")}</strong>
+                        <span>{t("start.dineInDesc")}</span>
                     </button>
                     <button
                         type="button"
@@ -453,12 +459,12 @@ function AppLayout({
                         >
                             <path d="M5 7h14l1 14H4L5 7Zm4 1V6a3 3 0 0 1 6 0v2" />
                         </svg>
-                        <strong>포장</strong>
-                        <span>가지고 가기</span>
+                        <strong>{t("start.takeout")}</strong>
+                        <span>{t("start.takeoutDesc")}</span>
                     </button>
                 </div>
                 <p className="kiosk-start-instruction">
-                    주문 방법을 선택해 주세요
+                    {t("start.instruction")}
                 </p>
             </section>
         </main>
@@ -529,13 +535,13 @@ function AppLayout({
         return (
             <section
                 className="order-dock compact-order-dock"
-                aria-label="선택한 메뉴와 결제"
+                aria-label={t("dock.aria")}
             >
                 <div className="selected-menu-tray">
                     <div className="tray-items">
                         {cart.length === 0 ? (
                             <div className="tray-placeholder">
-                                <span>선택한 메뉴가 여기에 담깁니다</span>
+                                <span>{t("dock.placeholder")}</span>
                             </div>
                         ) : (
                             dockLines.map((line, idx) => {
@@ -543,28 +549,26 @@ function AppLayout({
                                     (menu) => menu.id === line.id
                                 )
                                 if (!m) return null
+                                const name = menu(m).name
+                                const itemLabel = `${name} ${optionsText(line)}`
                                 return (
                                     <article
                                         key={line.key || idx}
                                         className="tray-item"
-                                        aria-label={`${m.name} ${optionsText(
-                                            line
-                                        )}`}
+                                        aria-label={itemLabel}
                                     >
                                         <button
                                             type="button"
                                             className="tray-product"
                                             onClick={() => openEditLine(idx)}
-                                            aria-label={`${
-                                                m.name
-                                            } ${optionsText(line)} 옵션 변경`}
+                                            aria-label={t("dock.editAria", { item: itemLabel })}
                                         >
                                             <div
                                                 className={`product-photo photo-${m.id}`}
                                                 role="img"
-                                                aria-label={m.name}
+                                                aria-label={name}
                                             />
-                                            <span>{m.name}</span>
+                                            <span>{name}</span>
                                         </button>
                                         <button
                                             type="button"
@@ -572,7 +576,7 @@ function AppLayout({
                                             onClick={() =>
                                                 handleRemoveFromCart(idx)
                                             }
-                                            aria-label={`${m.name} 삭제`}
+                                            aria-label={t("dock.removeAria", { name })}
                                         >
                                             <svg
                                                 className="icon"
@@ -594,7 +598,7 @@ function AppLayout({
                                                     handleCartQty(idx, -1)
                                                 }
                                                 disabled={line.quantity <= 1}
-                                                aria-label={`${m.name} 수량 줄이기`}
+                                                aria-label={t("dock.decreaseAria", { name })}
                                             >
                                                 <svg
                                                     viewBox="0 0 24 24"
@@ -611,7 +615,7 @@ function AppLayout({
                                                 </svg>
                                             </button>
                                             <strong
-                                                aria-label={`수량 ${line.quantity}`}
+                                                aria-label={t("dock.quantityAria", { n: line.quantity })}
                                             >
                                                 {line.quantity}
                                             </strong>
@@ -621,7 +625,7 @@ function AppLayout({
                                                     handleCartQty(idx, 1)
                                                 }
                                                 disabled={line.quantity >= 99}
-                                                aria-label={`${m.name} 수량 늘리기`}
+                                                aria-label={t("dock.increaseAria", { name })}
                                             >
                                                 <svg
                                                     viewBox="0 0 24 24"
@@ -646,7 +650,7 @@ function AppLayout({
                 </div>
                 <div className="dock-payment-summary">
                     <div className="dock-amount">
-                        <span>{onCheckout ? "총 결제 금액" : "총 주문 금액"}</span>
+                        <span>{t(onCheckout ? "dock.totalPay" : "dock.totalOrder")}</span>
                         <strong aria-live="polite">{money(cartTotal)}</strong>
                     </div>
                     <button
@@ -655,7 +659,7 @@ function AppLayout({
                         disabled={cart.length === 0}
                         onClick={() => setShowClearConfirm(true)}
                     >
-                        전체 취소
+                        {t("dock.clearAll")}
                     </button>
                 </div>
                 <button
@@ -677,7 +681,7 @@ function AppLayout({
                         <path d="M4 7V5l13-3v5M3 7h17v14H3V7Z" />
                         <path d="M16 12h6v5h-6a2.5 2.5 0 0 1 0-5Z" />
                     </svg>
-                    <span>{onCheckout ? "결제하기" : "주문 확인"}</span>
+                    <span>{t(onCheckout ? "dock.pay" : "dock.review")}</span>
                 </button>
             </section>
         )
@@ -693,7 +697,7 @@ function AppLayout({
             data-screen={activePage}
         >
             <a href="#main" className="skip-link">
-                주문 화면으로 바로 가기
+                {t("common.skipLink")}
             </a>
 
             {/* ── 1. start 화면 ── */}
@@ -716,10 +720,13 @@ function AppLayout({
                 <>
                     <KioskHeader
                         onHome={handleHomeRequest}
-                        elapsed={activeElapsed}
+                        elapsed={elapsed}
+                        startedAt={orderStartedAt}
                         showHome={true}
                         font={font}
                         onFont={onFont}
+                        language={language}
+                        onLanguage={onLanguage}
                     />
                     <StepBar
                         demo={!onCheckout && !completeSlot}
@@ -772,9 +779,9 @@ function AppLayout({
             {/* ── 전체 취소 확인 ── */}
             <ConfirmDialog
                 isOpen={showClearConfirm}
-                title="선택한 메뉴를 모두 취소할까요?"
-                description="선택한 메뉴가 모두 삭제됩니다."
-                confirmLabel="전체 취소"
+                title={t("dialog.clearTitle")}
+                description={t("dialog.clearDesc")}
+                confirmLabel={t("dock.clearAll")}
                 onConfirm={handleClearCart}
                 onCancel={() => setShowClearConfirm(false)}
             />
@@ -790,13 +797,11 @@ function AppLayout({
             {/* ── 처음으로 확인 ── */}
             <ConfirmDialog
                 isOpen={showHomeConfirm}
-                title="처음으로 돌아갈까요?"
+                title={t("dialog.homeTitle")}
                 description={
-                    cart.length
-                        ? "선택한 메뉴와 진행 중인 주문이 초기화돼요."
-                        : "주문 방법 선택 화면으로 돌아가요."
+                    t(cart.length ? "dialog.homeDescCart" : "dialog.homeDescEmpty")
                 }
-                confirmLabel="처음으로"
+                confirmLabel={t("header.home")}
                 onConfirm={handleNewOrder}
                 onCancel={() => setShowHomeConfirm(false)}
             />
@@ -804,7 +809,7 @@ function AppLayout({
             {/* ── 주문·결제 요청 오류 안내 ── */}
             <ConfirmDialog
                 isOpen={Boolean(checkoutError)}
-                title="주문을 진행하지 못했어요"
+                title={t("dialog.errorTitle")}
                 description={checkoutError}
                 hideCancel
                 onConfirm={() => setCheckoutError("")}

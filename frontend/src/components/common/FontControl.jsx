@@ -1,4 +1,5 @@
 import "./FontControl.css"
+import { useI18n } from "../../i18n/context"
 
 /**
  * FontControl
@@ -10,20 +11,22 @@ import "./FontControl.css"
  *   font    {number} 현재 단계 (0=일반, 1=큰글씨, 2=최대)
  *   onFont  {Function} 단계 변경 콜백 (nextIndex: number) => void
  */
-const LABELS = ["일반", "큰글씨", "최대"]
+const LEVELS = [0, 1, 2]
 
 function FontControl({ font = 0, onFont }) {
+  const { t } = useI18n()
+
   return (
-    <div className="font-control" role="group" aria-label="글자 크기">
-      {LABELS.map((label, i) => (
+    <div className="font-control" role="group" aria-label={t("font.group")}>
+      {LEVELS.map((i) => (
         <button
-          key={label}
+          key={i}
           type="button"
           className={`font-btn${font === i ? " font-btn--active" : ""}`}
           aria-pressed={font === i}
           onClick={() => onFont?.(i)}
         >
-          {label}
+          {t(`font.${i}`)}
         </button>
       ))}
     </div>

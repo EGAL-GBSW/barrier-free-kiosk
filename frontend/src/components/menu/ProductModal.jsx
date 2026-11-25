@@ -1,6 +1,7 @@
 import { useState } from "react"
 import "./ProductModal.css"
-import { money, unitPrice, defaults } from "./menuData"
+import { unitPrice, defaults } from "./menuData"
+import { useI18n } from "../../i18n/context"
 
 /**
  * ProductModal
@@ -44,16 +45,12 @@ function ProductModalInternal({
     onAddToCart,
 }) {
     const [options, setOptions] = useState(initialOptions)
+    const { lang, t, money, menu } = useI18n()
 
-    const {
-        id,
-        name,
-        en,
-        description,
-        allergens,
-        temps = [],
-        category,
-    } = product
+    const { id, en, temps = [], category } = product
+    const { name, description, allergens } = menu(product)
+    // 영문 부제: 영어 화면에서는 제목과 겹치므로 한국어 원래 이름을 보여줌
+    const subtitle = lang === "en" ? product.name : en
     const calculatedUnitPrice = unitPrice(product, options)
     const totalPrice = calculatedUnitPrice * options.quantity
 
@@ -99,7 +96,7 @@ function ProductModalInternal({
                     type="button"
                     className="modal-close-btn"
                     onClick={onClose}
-                    aria-label="닫기"
+                    aria-label={t("common.close")}
                 >
                     <svg
                         viewBox="0 0 24 24"
@@ -120,7 +117,7 @@ function ProductModalInternal({
                         role="img"
                         aria-label={name}
                     />
-                    {en && <span className="product-en">{en}</span>}
+                    {subtitle && <span className="product-en">{subtitle}</span>}
                 </div>
 
                 <div className="product-modal-content">
@@ -130,32 +127,30 @@ function ProductModalInternal({
                     )}
                     {allergens && (
                         <span className="allergen">
-                            알레르기 유발 성분: {allergens}
+                            {t("product.allergens", { list: allergens })}
                         </span>
                     )}
 
                     {temps.length > 0 && (
                         <fieldset>
                             <legend>
-                                온도 <span>필수 선택</span>
+                                {t("product.temperature")} <span>{t("product.required")}</span>
                             </legend>
                             <div className="option-row">
-                                {temps.map((t) => {
-                                    const isSelected = options.temperature === t
+                                {temps.map((temp) => {
+                                    const isSelected = options.temperature === temp
                                     return (
                                         <button
-                                            key={t}
+                                            key={temp}
                                             type="button"
                                             className={`option-btn${
                                                 isSelected ? " selected" : ""
                                             }`}
-                                            onClick={() => handleTemperature(t)}
+                                            onClick={() => handleTemperature(temp)}
                                             aria-pressed={isSelected}
                                         >
                                             <strong>
-                                                {t === "ICE"
-                                                    ? "시원하게 ICE"
-                                                    : "따뜻하게 HOT"}
+                                                {t(temp === "ICE" ? "product.ice" : "product.hot")}
                                             </strong>
                                         </button>
                                     )
@@ -166,7 +161,7 @@ function ProductModalInternal({
 
                     {category !== "bakery" && (
                         <fieldset>
-                            <legend>사이즈</legend>
+                            <legend>{t("product.size")}</legend>
                             <div className="option-row">
                                 {["Regular", "Large"].map((sz) => {
                                     const isSelected = options.size === sz
@@ -183,8 +178,8 @@ function ProductModalInternal({
                                             <strong>{sz}</strong>
                                             <small>
                                                 {sz === "Large"
-                                                    ? "+700원"
-                                                    : "기본 사이즈"}
+                                                    ? `+${money(700)}`
+                                                    : t("product.sizeDefault")}
                                             </small>
                                         </button>
                                     )
@@ -195,7 +190,7 @@ function ProductModalInternal({
 
                     {category === "coffee" && (
                         <fieldset>
-                            <legend>샷 추가</legend>
+                            <legend>{t("product.shots")}</legend>
                             <div className="option-row">
                                 {[0, 1, 2].map((cnt) => {
                                     const isSelected = options.shots === cnt
@@ -211,12 +206,12 @@ function ProductModalInternal({
                                         >
                                             <strong>
                                                 {cnt === 0
-                                                    ? "기본"
-                                                    : `${cnt}샷 추가`}
+                                                    ? t("product.shotNone")
+                                                    : t("product.shotAdd", { n: cnt })}
                                             </strong>
                                             <small>
                                                 {cnt === 0
-                                                    ? "추가 없음"
+                                                    ? t("product.shotNoneDesc")
                                                     : `+${money(cnt * 500)}`}
                                             </small>
                                         </button>
@@ -227,13 +222,13 @@ function ProductModalInternal({
                     )}
 
                     <div className="modal-quantity">
-                        <span>수량</span>
+                        <span>{t("product.quantity")}</span>
                         <div className="quantity">
                             <button
                                 type="button"
                                 onClick={() => handleQuantity(-1)}
                                 disabled={options.quantity <= 1}
-                                aria-label="수량 줄이기"
+                                aria-label={t("product.decrease")}
                             >
                                 <svg
                                     viewBox="0 0 24 24"
@@ -254,7 +249,7 @@ function ProductModalInternal({
                                 type="button"
                                 onClick={() => handleQuantity(1)}
                                 disabled={options.quantity >= 99}
-                                aria-label="수량 늘리기"
+                                aria-label={t("product.increase")}
                             >
                                 <svg
                                     viewBox="0 0 24 24"
@@ -280,7 +275,7 @@ function ProductModalInternal({
                     >
                         <strong>{money(totalPrice)}</strong>
                         <span>
-                            {isEditing ? "변경하기" : "담기"}
+                            {t(isEditing ? "product.change" : "product.add")}
                             <svg
                                 viewBox="0 0 24 24"
                                 fill="none"

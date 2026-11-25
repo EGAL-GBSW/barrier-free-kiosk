@@ -3,6 +3,8 @@ import "./PaymentResultPage.css"
 import CompletePage from "./CompletePage"
 import { confirmPayment, getOrder } from "../../api/client"
 import toReceipt from "../payment/toReceipt"
+import { useI18n } from "../../i18n/context"
+import { getLanguage, translate } from "../../i18n/translate"
 
 function readReturnParams() {
     const params = new URLSearchParams(window.location.search)
@@ -20,17 +22,19 @@ function readReturnParams() {
 function getReturnFailure({ isSuccess, paymentKey, orderId, amount, code, message }) {
     if (!isSuccess) {
         return {
-            title:
+            titleKey:
                 code === "PAY_PROCESS_CANCELED"
-                    ? "결제를 취소했어요"
-                    : "결제하지 못했어요",
-            description: message || "결제가 완료되지 않았어요.",
+                    ? "result.canceled"
+                    : "result.failed",
+            // 토스가 보낸 실패 사유가 있으면 그대로, 없으면 번역 문구
+            description: message || undefined,
+            descriptionKey: "result.failedDesc",
         }
     }
     if (!paymentKey || !orderId || !Number.isSafeInteger(amount) || amount < 1) {
         return {
-            title: "결제 정보를 확인할 수 없어요",
-            description: "결제 정보가 올바르지 않아요.",
+            titleKey: "result.invalidTitle",
+            descriptionKey: "result.invalidDesc",
         }
     }
     return null
@@ -47,6 +51,7 @@ function getReturnFailure({ isSuccess, paymentKey, orderId, amount, code, messag
  *   onDone  {Function}  시작 화면으로 돌아가기 () => void
  */
 function PaymentResultPage({ onDone }) {
+    const { t } = useI18n()
     const [result] = useState(readReturnParams)
     const [returnFailure] = useState(() => getReturnFailure(result))
     const [view, setView] = useState(
@@ -66,7 +71,7 @@ function PaymentResultPage({ onDone }) {
             try {
                 await confirmPayment({ paymentKey, orderId, amount })
                 const order = await getOrder(orderId)
-                if (order?.status !== "PAID") throw new Error("서버에 결제 완료 상태가 아직 기록되지 않았어요.")
+                if (order?.status !== "PAID") throw new Error(translate(getLanguage(), "result.notRecorded"))
                 setView({ status: "done", receipt: toReceipt(order) })
             } catch (error) {
                 // 4xx는 다시 요청해도 같은 결과입니다. 그 외에는 승인 여부를 알 수 없습니다.
@@ -74,9 +79,9 @@ function PaymentResultPage({ onDone }) {
                 setView({
                     status: "failed",
                     uncertain,
-                    title: uncertain
-                        ? "결제 상태를 확인하지 못했어요"
-                        : "결제를 완료하지 못했어요",
+                    titleKey: uncertain
+                        ? "result.uncertainTitle"
+                        : "result.notCompleteTitle",
                     description: error.message,
                 })
             }
@@ -98,8 +103,8 @@ function PaymentResultPage({ onDone }) {
         return (
             <main id="main" className="payment-confirming" role="status">
                 <span className="payment-spinner" aria-hidden="true" />
-                <h1>결제를 확인하고 있어요.</h1>
-                <p>화면을 닫지 말고 잠시만 기다려 주세요.</p>
+                <h1>{t("result.confirming")}</h1>
+                <p>{t("result.wait")}</p>
             </main>
         )
     }
@@ -121,12 +126,10 @@ function PaymentResultPage({ onDone }) {
                         <circle cx="12" cy="12" r="9" />
                     </svg>
                 </span>
-                <h1>{view.title}</h1>
-                <p role="alert">{view.description}</p>
+                <h1>{t(view.titleKey)}</h1>
+                <p role="alert">{view.description ?? t(view.descriptionKey)}</p>
                 <p className="payment-result-help">
-                    {view.uncertain
-                        ? "결제가 이미 완료되었을 수 있어요. 다시 확인해 보시고, 계속 안 되면 직원에게 문의해 주세요."
-                        : "처음으로 돌아가 다시 주문해 주세요."}
+                    {t(view.uncertain ? "result.uncertainHelp" : "result.restartHelp")}
                 </p>
                 <div className="payment-result-actions">
                     {view.uncertain && (
@@ -135,7 +138,7 @@ function PaymentResultPage({ onDone }) {
                             className="button primary"
                             onClick={handleRetry}
                         >
-                            다시 확인하기
+                            {t("result.retry")}
                         </button>
                     )}
                     <button
@@ -143,7 +146,7 @@ function PaymentResultPage({ onDone }) {
                         className={`button ${view.uncertain ? "secondary" : "primary"}`}
                         onClick={onDone}
                     >
-                        처음으로 돌아가기
+                        {t("header.homeAria")}
                     </button>
                 </div>
             </div>

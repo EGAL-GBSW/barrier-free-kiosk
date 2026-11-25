@@ -1,5 +1,8 @@
 import "./KioskHeader.css"
 import FontControl from "../common/FontControl"
+import LanguageSelect from "../common/LanguageSelect"
+import ElapsedClock from "./ElapsedClock"
+import { useI18n } from "../../i18n/context"
 
 /**
  * KioskHeader
@@ -12,18 +15,26 @@ import FontControl from "../common/FontControl"
  *
  * Props:
  *   onHome      {Function}  홈 버튼 클릭 핸들러
- *   elapsed     {string}    경과 시간 ("MM:SS")
+ *   elapsed     {string}    경과 시간 ("MM:SS"), 전달 시 고정 표시
+ *   startedAt   {number}    주문 시작 시각 (elapsed 미전달 시 이 시각부터 자동 카운트)
  *   showHome    {boolean}   홈 버튼 표시 여부 (기본값 true)
  *   font        {number}    글자 크기 단계 (0=일반, 1=큰글씨, 2=최대)
  *   onFont      {Function}  글자 크기 변경 핸들러
+ *   language    {string}    화면 언어 코드 ('ko'|'en'|'ja')
+ *   onLanguage  {Function}  언어 변경 핸들러
  */
 function KioskHeader({
   onHome,
-  elapsed = "00:00",
+  elapsed = "",
+  startedAt = null,
   showHome = true,
   font = 0,
   onFont,
+  language = "ko",
+  onLanguage,
 }) {
+  const { t } = useI18n()
+
   return (
     <header className="header kiosk-header">
       {/* ── 좌: 홈 버튼 or 워드마크 ── */}
@@ -33,7 +44,7 @@ function KioskHeader({
           className="header-home"
           onClick={onHome}
           data-action="home"
-          aria-label="처음으로 돌아가기"
+          aria-label={t("header.homeAria")}
         >
           <svg
             className="icon"
@@ -47,24 +58,29 @@ function KioskHeader({
           >
             <path d="m3 10 9-7 9 7v11h-7v-7h-4v7H3V10Z" />
           </svg>
-          <span>처음으로</span>
+          <span>{t("header.home")}</span>
         </button>
       ) : (
-        <span className="wordmark" aria-label="모그커피">
+        <span className="wordmark" aria-label={t("start.brand")}>
           mog<span className="brand-dot">.</span>
         </span>
       )}
 
-      {/* ── 중: 경과 시간 ── */}
-      <time
-        className="order-elapsed"
-        aria-label={`주문 경과 시간 ${elapsed || "00:00"}`}
-      >
-        {elapsed || "00:00"}
-      </time>
+      {/* ── 중: 경과 시간 (elapsed 미전달 시 ElapsedClock이 자체 카운트) ── */}
+      {elapsed ? (
+        <time
+          className="order-elapsed"
+          aria-label={t("header.elapsed", { time: elapsed })}
+        >
+          {elapsed}
+        </time>
+      ) : (
+        <ElapsedClock startedAt={startedAt} />
+      )}
 
       {/* ── 우: 글자 크기 조절 ── */}
       <div className="header-tools">
+        <LanguageSelect language={language} onLanguage={onLanguage} />
         <FontControl font={font} onFont={onFont} />
       </div>
     </header>
