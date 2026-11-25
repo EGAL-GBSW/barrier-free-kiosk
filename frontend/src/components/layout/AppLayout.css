@@ -175,39 +175,7 @@
   color: #263a4c;
 }
 
-.menu-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-  flex-shrink: 0;
-  margin-top: auto;
-  padding: 10px 0 6px;
-}
-
-.menu-pagination span {
-  color: #546779;
-  font-size: 1rem;
-}
-
-.page-button {
-  min-height: 44px;
-  min-width: 90px;
-  border: 1px solid #bdcede;
-  border-radius: 7px;
-  background: #fff;
-  font-size: 0.95rem;
-  font-weight: 650;
-  color: #315475;
-  cursor: pointer;
-}
-
-.page-button:disabled {
-  background: #eef2f5;
-  border-color: #e1e7ec;
-  color: #98a3ad;
-  cursor: not-allowed;
-}
+/* 이전/다음 버튼(.menu-stage, .page-button) 스타일은 MenuPagination.css에서 관리 */
 
 /* ── 하단 주문 독 (col 1/-1, row 2) ── */
 .compact-order-dock,

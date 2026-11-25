@@ -492,7 +492,8 @@ function AppLayout({
                     totalPages={totalPages}
                     onSelectProduct={(p) => { voiceOrder.stopListening(); setSelectedProduct(p) }}
                     onPageChange={(p) => handlePageChange(p - 1)}
-                    speechStatus={voiceOrder.speechStatus}
+                    /* 터치 주문으로 바꾸면 음성 안내 문구를 숨김 (음성 주문으로 돌아오면 새 안내가 표시됨) */
+                    speechStatus={orderMode === "voice" ? voiceOrder.speechStatus : ""}
                     draft={useTeamAi ? aiVoiceOrder.draft : ""}
                     pendingQuote={useTeamAi ? aiVoiceOrder.pending : null}
                     onConfirmQuote={aiVoiceOrder.confirmPending}
@@ -510,18 +511,17 @@ function AppLayout({
 
         return (
             <section className="kiosk-catalogue">
-                <ProductGrid
-                    products={visibleProducts}
-                    pageSize={pageSize}
-                    onSelectProduct={(p) => setSelectedProduct(p)}
-                />
                 <MenuPagination
                     currentPage={safePage + 1}
                     totalPages={totalPages}
-                    onPrev={() => handlePageChange(safePage - 1)}
-                    onNext={() => handlePageChange(safePage + 1)}
                     onPageChange={(p) => handlePageChange(p - 1)}
-                />
+                >
+                    <ProductGrid
+                        products={visibleProducts}
+                        pageSize={pageSize}
+                        onSelectProduct={(p) => setSelectedProduct(p)}
+                    />
+                </MenuPagination>
             </section>
         )
     }

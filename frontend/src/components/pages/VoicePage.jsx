@@ -38,18 +38,17 @@ function VoicePage({
         <section className="voice-page-v2" aria-label={t("voice.pageAria")}>
             {/* 메뉴 카탈로그 (터치 메뉴와 동일) */}
             <div className="voice-catalogue">
-                <ProductGrid
-                    products={products}
-                    pageSize={pageSize}
-                    onSelectProduct={onSelectProduct}
-                />
                 <MenuPagination
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPrev={() => onPageChange?.(currentPage - 1)}
-                    onNext={() => onPageChange?.(currentPage + 1)}
                     onPageChange={onPageChange}
-                />
+                >
+                    <ProductGrid
+                        products={products}
+                        pageSize={pageSize}
+                        onSelectProduct={onSelectProduct}
+                    />
+                </MenuPagination>
             </div>
 
             {voiceProgress ? (
