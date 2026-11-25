@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { parseOrder } from "../menu/menuData"
+import { resolveRecommendation } from "../menu/recommendation"
 
 /**
  * useVoiceOrder
@@ -9,11 +10,13 @@ import { parseOrder } from "../menu/menuData"
  * @param {string} options.currentPage       현재 페이지 ('voice' | 'menu' 등)
  * @param {Function} options.onAddToCart     장바구니 추가 핸들러 (menu, options) => void
  * @param {Function} options.onToast         토스트 알림 핸들러 (msg) => void
+ * @param {Function} options.onRecommend     AI 추천 결과 핸들러 (recommendation) => void
  */
 export function useVoiceOrder({
     currentPage = "menu",
     onAddToCart,
     onToast,
+    onRecommend,
 } = {}) {
     const [listening, setListening] = useState(false)
     const [speechStatus, setSpeechStatus] = useState("")
@@ -48,7 +51,12 @@ export function useVoiceOrder({
             // 메뉴 페이지에서 바로 음성 인식한 경우
             if (currentPage === "menu" || currentPage === "voice") {
                 setPending(null)
-                if (parsed.error) {
+                // 메뉴 이름이 없는 발화("따뜻한 거 먹고 싶어요")는 조건에 맞는 메뉴를 AI 추천 탭에 모음
+                const recommendation = parsed.error ? resolveRecommendation(null, text) : null
+                if (recommendation) {
+                    setSpeechStatus("말씀하신 조건에 맞는 메뉴를 AI 추천에 모았어요. 메뉴를 눌러 담아 주세요.")
+                    onRecommend?.(recommendation)
+                } else if (parsed.error) {
                     setSpeechStatus(parsed.error)
                     onToast?.(parsed.error)
                 } else {
@@ -81,7 +89,7 @@ export function useVoiceOrder({
                 setSpeechStatus("")
             }
         },
-        [currentPage, onAddToCart, onToast, stopListening]
+        [currentPage, onAddToCart, onToast, onRecommend, stopListening]
     )
 
     const toggleListen = useCallback(() => {

@@ -100,3 +100,25 @@
         font-size: 0.88rem;
     }
 }
+
+/* ─── AI 추천 탭 안내 문구 (그리드 위 한 줄) ─── */
+.menu-notice {
+    margin: 0;
+    padding: 10px 16px;
+    border: 1px solid #d9d3f7;
+    border-radius: 10px;
+    background: #f6f4ff;
+    color: #3f3590;
+    font-size: 1rem;
+    font-weight: 650;
+    line-height: 1.45;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+    .menu-notice {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+}

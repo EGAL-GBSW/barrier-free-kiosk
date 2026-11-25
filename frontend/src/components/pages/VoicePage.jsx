@@ -17,6 +17,7 @@ import { useI18n } from "../../i18n/context"
  *   onSelectProduct  {Function}  상품 선택 핸들러
  *   onPageChange     {Function}  페이지 변경 핸들러
  *   speechStatus     {string}    음성 상태 안내 문구
+ *   notice           {string}    메뉴 그리드 위 안내 문구 (AI 추천 탭의 추천 조건·빈 상태 안내)
  */
 function VoicePage({
     products = [],
@@ -26,6 +27,7 @@ function VoicePage({
     onSelectProduct,
     onPageChange,
     speechStatus = "",
+    notice = "",
     draft = "",
     pendingQuote,
     onConfirmQuote,
@@ -38,6 +40,11 @@ function VoicePage({
         <section className="voice-page-v2" aria-label={t("voice.pageAria")}>
             {/* 메뉴 카탈로그 (터치 메뉴와 동일) */}
             <div className="voice-catalogue">
+                {notice && (
+                    <p className="menu-notice" role="status">
+                        {notice}
+                    </p>
+                )}
                 <MenuPagination
                     currentPage={currentPage}
                     totalPages={totalPages}

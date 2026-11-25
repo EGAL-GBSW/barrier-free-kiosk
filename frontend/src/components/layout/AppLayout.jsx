@@ -21,6 +21,7 @@ import { useI18n } from "../../i18n/context"
 import {
     MENUS,
     CATEGORIES,
+    findMenu,
     total,
     lineKey,
 } from "../menu/menuData"
@@ -217,15 +218,27 @@ function AppLayout({
         setEditingIndex(null)
     }
 
+    // ── AI 추천 카테고리 ──
+    // 음성 발화에서 찾은 조건(따뜻한, 달달한 등)에 맞는 메뉴 목록. 형식은 menu/recommendation.js 참고
+    const [recommendation, setRecommendation] = useState(null)
+    const handleRecommend = (next) => {
+        setRecommendation(next)
+        setActiveCategory("ai")
+        setMenuPage(0)
+        showToast(t(next.menuIds.length ? "ai.found" : "ai.noMatch"))
+    }
+
     // ── 음성 주문 Web Speech API 훅 연동 ──
     const browserVoiceOrder = useVoiceOrder({
         currentPage: activePage,
         onAddToCart: handleAddToCart,
         onToast: showToast,
+        onRecommend: handleRecommend,
     })
     const aiVoiceOrder = useAiVoiceOrder({
         cart,
         orderType,
+        onRecommend: handleRecommend,
         onConfirmOrder: async (quote) => {
             if (checkoutLock.current) throw new Error(t("dialog.alreadyProcessing"))
             if (onCheckout) {
@@ -249,9 +262,25 @@ function AppLayout({
     // 폰트 단계 및 카테고리에 따른 메뉴 필터링 및 페이징 계산
     const pageSize = font === 2 ? 2 : 6
     const filteredProducts =
-        activeCategory === "all"
-            ? MENUS
-            : MENUS.filter((m) => m.category === activeCategory)
+        activeCategory === "ai"
+            ? recommendation
+                ? recommendation.menuIds.map(findMenu).filter(Boolean)
+                : MENUS // 추천 전에는 전체 메뉴를 보여줌
+            : activeCategory === "all"
+              ? MENUS
+              : MENUS.filter((m) => m.category === activeCategory)
+
+    // AI 추천 탭 안내 문구 (추천 전 / 결과 없음 / 추천 조건)
+    const aiNotice =
+        activeCategory !== "ai"
+            ? ""
+            : !recommendation
+              ? t("ai.empty")
+              : !recommendation.menuIds.length
+                ? t("ai.noMatch")
+                : recommendation.keywords.length
+                  ? t("ai.banner", { keywords: recommendation.keywords.join(", ") })
+                  : t("ai.bannerPlain")
     const totalPages = Math.max(
         1,
         Math.ceil(filteredProducts.length / pageSize)
@@ -284,6 +313,10 @@ function AppLayout({
     const handleSelectCategory = (catId) => {
         setActiveCategory(catId)
         setMenuPage(0)
+        // AI 추천은 음성 발화로 시작되므로, 탭을 누르면 바로 음성 주문을 시작 (이미 듣는 중이면 그대로)
+        if (catId === "ai" && (orderMode !== "voice" || !voiceOrder.listening)) {
+            handleOrderMode("voice")
+        }
     }
 
     const handlePageChange = (newPage) => {
@@ -370,6 +403,7 @@ function AppLayout({
         setOrderMode("touch")
         setVoiceNoticeKey(0)
         setActiveCategory("all")
+        setRecommendation(null)
         setMenuPage(0)
         handleHomeNavigation()
     }
@@ -494,6 +528,7 @@ function AppLayout({
                     onPageChange={(p) => handlePageChange(p - 1)}
                     /* 터치 주문으로 바꾸면 음성 안내 문구를 숨김 (음성 주문으로 돌아오면 새 안내가 표시됨) */
                     speechStatus={orderMode === "voice" ? voiceOrder.speechStatus : ""}
+                    notice={aiNotice}
                     draft={useTeamAi ? aiVoiceOrder.draft : ""}
                     pendingQuote={useTeamAi ? aiVoiceOrder.pending : null}
                     onConfirmQuote={aiVoiceOrder.confirmPending}
