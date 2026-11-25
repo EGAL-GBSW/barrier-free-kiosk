@@ -57,6 +57,8 @@ const useTeamAi = import.meta.env.VITE_VOICE_MODE === "ai"
  *   elapsed          {string}    경과 시간 "MM:SS" (생략 시 주문 시작 후 자동 카운트)
  *   font             {number}    글자 크기 단계 (0=일반, 1=큰글씨, 2=최대)
  *   onFont           {Function}  글자 크기 변경 핸들러
+ *   language         {string}    화면 언어 코드 ('ko'|'en'|'ja')
+ *   onLanguage       {Function}  언어 변경 핸들러
  *   isCheckoutOpen   {boolean}   토스 결제 모달 오픈 여부 (StepBar 스타일 제어)
  *   onCheckout       {Function}  주문 확인 후 결제 진행 ({ cart, orderType, widgets }) => Promise | void
  *                                실패 시 error.message를 오류 안내 팝업으로 표시
@@ -76,6 +78,8 @@ function AppLayout({
     elapsed = "",
     font = 0,
     onFont,
+    language = "ko",
+    onLanguage,
     isCheckoutOpen = false,
     onCheckout,
     toast: toastProps = { message: "", visible: false },
@@ -132,6 +136,11 @@ function AppLayout({
         document.documentElement.dataset.screen = activePage
     }, [font, activePage])
 
+    // 화면 언어를 <html lang>에 반영 (스크린리더 발음·브라우저 음성 처리 기준)
+    useEffect(() => {
+        document.documentElement.lang = language
+    }, [language])
+
     // 경과 시간: 시작 시각만 보관하고, 매초 갱신은 헤더의 ElapsedClock이 담당
     // (결제 화면에서 헤더가 사라졌다 돌아와도 같은 시작 시각 기준으로 이어서 표시)
     const [orderStartedAt, setOrderStartedAt] = useState(null)
@@ -169,7 +178,7 @@ function AppLayout({
             }
             return [...prevCart, { ...options, id: product.id, key }]
         })
-        showToast(`${product.name} ${options.quantity}개를 담았어요.`)
+        showToast(t("toast.added", { name: menu(product).name, n: options.quantity }))
     }
 
     // 옵션 변경: 같은 옵션 항목이 있으면 합치고, 없으면 제자리에서 교체
@@ -192,7 +201,7 @@ function AppLayout({
             next[index] = { ...options, id: product.id, key }
             return next
         })
-        showToast(`${product.name} ${options.quantity}개로 변경했어요.`)
+        showToast(t("toast.changed", { name: menu(product).name, n: options.quantity }))
     }
 
     const openEditLine = (index) => {

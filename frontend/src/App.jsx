@@ -25,6 +25,7 @@ function App() {
   const [page, setPage] = useState(paymentReturn ? "complete" : "start")
   const [step, setStep] = useState(paymentReturn ? 5 : 1)
   const [font, setFont] = useState(0)
+  const [language, setLanguage] = useState("ko")
 
   const goToStart = () => {
     if (paymentReturn) {
@@ -35,12 +36,17 @@ function App() {
     setStep(1)
   }
 
+  const i18n = useMemo(() => createI18n(language), [language])
+
   return (
+    <I18nContext.Provider value={i18n}>
     <AppLayout
       page={page}
       currentStep={step}
       font={font}
       onFont={setFont}
+      language={language}
+      onLanguage={setLanguage}
       onCheckout={testMode ? startTestPayment : undefined}
       completeSlot={
         paymentReturn ? <PaymentResultPage onDone={goToStart} /> : undefined
