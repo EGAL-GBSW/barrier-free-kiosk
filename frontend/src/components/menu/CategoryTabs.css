@@ -2,17 +2,18 @@
  *  레퍼런스 ./frontend/app.js 및 ./frontend/kiosk.css 기준
  * ──────────────────────────────────────────────────────────────── */
 
+/* 메뉴 화면 오른쪽 레일 (workspace col 2) */
 .category-tabs {
-    grid-column: 1;
+    grid-column: 2;
     grid-row: 1;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     justify-content: space-between;
     gap: 16px;
-    padding: 20px 14px 16px 18px;
+    padding: 20px 18px 16px 14px;
     background: #f1f7fc;
-    border-right: 1px solid #dce7ef;
+    border-left: 1px solid #dce7ef;
     min-height: 0;
     overflow: hidden;
     box-sizing: border-box;

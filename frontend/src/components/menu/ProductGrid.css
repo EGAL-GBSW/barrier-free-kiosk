@@ -1,11 +1,17 @@
 /* ─── ProductGrid ────────────────────────────────────────────────
  *  레퍼런스 ./frontend/kiosk.css 기준
+ *  카드 폭이 화면 폭을 따라 끝없이 늘어나지 않도록 열마다 최대 폭(--card-max)을 두고
+ *  남는 공간은 양옆으로 나눠 그리드를 가운데 정렬합니다.
  * ──────────────────────────────────────────────────────────────── */
 
 .product-grid {
+    --card-max: 240px;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, var(--card-max)));
+    justify-content: center;
+    /* 카드 폭을 줄인 만큼 간격을 넓혀 남는 공간을 고르게 채움 (화면 폭에 비례, 상·하한 있음) */
+    column-gap: clamp(20px, 3vw, 48px);
+    row-gap: clamp(18px, 2.4vh, 32px);
     align-content: start;
     align-items: stretch;
     flex: 1;
@@ -14,23 +20,24 @@
     box-sizing: border-box;
 }
 
-.product-grid[data-page-size="4"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
+/* 최대 글씨(2개씩 표시): 글자가 커지므로 카드를 조금 더 넓게 */
+.product-grid[data-page-size="4"],
 .product-grid[data-page-size="2"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    --card-max: 300px;
+    grid-template-columns: repeat(2, minmax(0, var(--card-max)));
 }
 
 @media (max-width: 1100px) {
     .product-grid {
-        gap: 12px;
+        column-gap: 20px;
+        row-gap: 16px;
     }
 }
 
 @media (max-width: 760px) {
     .product-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, var(--card-max)));
+        column-gap: 12px;
+        row-gap: 10px;
     }
 }

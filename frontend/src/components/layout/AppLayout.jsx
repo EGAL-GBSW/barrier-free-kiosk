@@ -744,15 +744,16 @@ function AppLayout({
                             />
                         )
                     ) : (
-                        /* 일반 주문 화면: 카테고리 레일 + 메인 패널 + 하단 독 그리드 */
+                        /* 일반 주문 화면: 메인 패널(왼쪽) + 카테고리 레일(오른쪽) + 하단 독 그리드
+                           화면 순서와 같도록 메인 패널을 먼저 둬서 키보드·스크린리더 탐색 순서를 맞춤 */
                         <div className="workspace">
-                            {categoryTabsSlot || renderDefaultCategoryTabs()}
-
                             <main id="main" className="main-panel">
                                 {mainSlot ||
                                     children ||
                                     renderDefaultMainPanel()}
                             </main>
+
+                            {categoryTabsSlot || renderDefaultCategoryTabs()}
 
                             {orderDockSlot || renderDefaultOrderDock()}
                         </div>

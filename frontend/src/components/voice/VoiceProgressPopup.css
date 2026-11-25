@@ -1,9 +1,10 @@
 .voice-progress-popup {
     position: fixed;
     z-index: 90;
-    right: clamp(12px, 3vw, 48px);
+    /* 오른쪽 카테고리 레일(터치/음성 전환 버튼)을 가리지 않도록 레일 폭만큼 띄움 */
+    right: calc(var(--rail, 0px) + clamp(12px, 3vw, 48px));
     bottom: clamp(12px, 3vw, 32px);
-    width: min(32rem, calc(100vw - 24px));
+    width: min(32rem, calc(100vw - var(--rail, 0px) - 24px));
     max-height: min(38rem, calc(100dvh - 24px));
     overflow: auto;
     box-sizing: border-box;
